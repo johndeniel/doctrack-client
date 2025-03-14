@@ -7,29 +7,25 @@ import { useForm } from "react-hook-form"
 import { z } from "zod"
 import { toast } from "sonner"
 
-import { loginUser } from "@/lib/actions"
+import { loginUserAccount } from "@/server/action/login"
 import { Button } from "@/components/ui/button"
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
-import { Eye, EyeOff } from "lucide-react" // Import eye icons
+import { Eye, EyeOff } from "lucide-react"
 
 const loginSchema = z.object({
-  username: z.string().min(3, {
-    message: "Username must be at least 3 characters.",
-  }),
-  password: z.string().min(6, {
-    message: "Password must be at least 6 characters.",
-  }),
+  username: z.string().min(8, { message: "Username must be at least 8 characters." }),
+  password: z.string().min(8, { message: "Password must be at least 8 characters." }),
 })
 
-type LoginFormValues = z.infer<typeof loginSchema>
+export type LoginFormValues = z.infer<typeof loginSchema>
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState(false)
-  const [showPassword, setShowPassword] = useState(false) // State to track password visibility
+  const [showPassword, setShowPassword] = useState(false)
   const router = useRouter()
 
-  const form = useForm({
+  const form = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
       username: "",
@@ -37,39 +33,70 @@ export default function LoginForm() {
     },
   })
 
+  const togglePasswordVisibility = () => setShowPassword((prev) => !prev)
+
   async function onSubmit(data: LoginFormValues) {
     setIsLoading(true)
 
     try {
-      const result = await loginUser(data)
+      await loginUserAccount(data)
+      router.push('/dashboard');
 
-      if (result.success) {
-        toast.success("Login successful", {
-          description: "Redirecting to dashboard...",
-        })
-        router.push("/dashboard")
-      } else {
-        toast.error("Login failed", {
-          description: result.error,
-        })
-      }
     } catch (error) {
-      toast.error("Something went wrong", {
-        description: "Please try again later.",
-      })
+         // Extract the error message from the Error object
+         const errorMessage = error instanceof Error ? error.message : String(error);
+         console.error("Error creating account:", errorMessage);
+         
+         // Parse the error message to extract structured data
+         if (error instanceof Error && error.message.includes('HTTP error!')) {
+           try {
+             // Extract the status, message and details using regex
+             const statusMatch = error.message.match(/status: (\d+)/);
+             const codeMatch = error.message.match(/code: (\d+)/);
+             const messageMatch = error.message.match(/message: ([^,]+)/);
+             const detailsMatch = error.message.match(/details: (.+)$/);
+             
+             const statusCode = statusMatch ? statusMatch[1] : null;
+             const code = codeMatch ? codeMatch[1] : null;
+             const message = messageMatch ? messageMatch[1] : null;
+             const details = detailsMatch ? detailsMatch[1] : null;
+             
+             console.log('Structured error:', { 
+               statusCode, 
+               code,
+               message, 
+               details 
+             });
+   
+             toast.error(message || "Error creating account", {
+               action: {
+                 label: "Retry",
+                 onClick: () => console.log("Retry"),
+               },
+             });
+             
+           } catch (parseError) {
+             console.error('Failed to parse error details:', parseError);
+             toast.error("Error creating account", {
+               description: "An unexpected error occurred",
+             });
+           }
+         } else {
+           // Handle non-HTTP errors
+           toast.error("Error creating account", {
+             description: errorMessage,
+           });
+         }
+  
     } finally {
       setIsLoading(false)
     }
   }
 
-  // Toggle password visibility
-  const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword)
-  }
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        {/* Username Field */}
         <FormField
           control={form.control}
           name="username"
@@ -84,6 +111,7 @@ export default function LoginForm() {
           )}
         />
 
+        {/* Password Field with Toggle Visibility */}
         <FormField
           control={form.control}
           name="password"
@@ -92,24 +120,22 @@ export default function LoginForm() {
               <FormLabel>Password</FormLabel>
               <FormControl>
                 <div className="relative">
-                  <Input 
-                    type={showPassword ? "text" : "password"} 
-                    placeholder="Enter your password" 
-                    {...field} 
+                  <Input
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Enter your password"
+                    {...field}
+                    ref={field.ref} // Ensure proper form registration
+                    onChange={(e) => field.onChange(e.target.value)}
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-0 top-0 h-full px-3 py-2"
+                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
                     onClick={togglePasswordVisibility}
                     tabIndex={-1}
                   >
-                    {showPassword ? (
-                      <EyeOff className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <Eye className="h-4 w-4" aria-hidden="true" />
-                    )}
+                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     <span className="sr-only">
                       {showPassword ? "Hide password" : "Show password"}
                     </span>
@@ -121,8 +147,9 @@ export default function LoginForm() {
           )}
         />
 
+        {/* Submit Button */}
         <Button type="submit" disabled={isLoading} className="w-full">
-          {isLoading ? "Signing in..." : "Sign in"}
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
     </Form>

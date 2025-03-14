@@ -94,3 +94,40 @@ CREATE TABLE IF NOT EXISTS users_profile_image (
   -- Prevents multiple profile images for the same user
   CONSTRAINT unique_account_profile UNIQUE (account_uuid)
 );
+
+
+-- User Authentication Sessions Table
+CREATE TABLE IF NOT EXISTS user_authentication_sessions (
+ -- Session Unique Identifier
+ session_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+ 
+ -- Foreign Key Linking to User Account
+ authenticated_user_id VARCHAR(36) NOT NULL,
+ 
+ -- Secure Authentication Token
+ authentication_token VARCHAR(500) UNIQUE NOT NULL,
+ 
+ -- Unique Device Hardware Identifier
+ device_hardware_identifier TEXT NOT NULL,
+ 
+ -- Client Network Address
+ client_network_address TEXT NOT NULL,
+ 
+ -- Client Software and Environment Details
+ client_user_agent TEXT NOT NULL,
+ 
+ -- Session Initialization Timestamp
+ session_initiated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+ 
+ -- Session Expiration Timestamp
+ session_expiration_timestamp TIMESTAMP NOT NULL,
+ 
+ -- Current Session Activation Status
+ is_session_active BOOLEAN DEFAULT TRUE,
+ 
+ -- Token Security Validation
+ CONSTRAINT secure_token_length CHECK (LENGTH(authentication_token) >= 32 AND LENGTH(authentication_token) <= 500),
+ 
+ -- Foreign Key Constraint linking to users_account table
+ FOREIGN KEY (authenticated_user_id) REFERENCES users_account(account_uuid) ON DELETE CASCADE
+);
