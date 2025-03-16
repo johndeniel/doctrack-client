@@ -6,15 +6,16 @@ import { createPool, PoolConnection } from 'mysql2/promise';
 
 interface QueryParams {
   query: string;
-  values?: (string | number | bigint | boolean | File | Buffer<ArrayBufferLike> | null)[];
+  values?: (string | number | boolean | null)[];
 }
-
-// Parse the connection string from environment variable
-const connectionString = process.env.NEXT_PUBLIC_DATABASE_CONNECTION;
 
 // Create a connection pool with optimized settings
 const pool = createPool({
-  uri: connectionString,      // Use the connection string
+  host: process.env.NEXT_PUBLIC_DATABASE_HOST,          // Change if needed
+  user: process.env.NEXT_PUBLIC_DATABASE_USER,               // Default XAMPP user
+  password: process.env.NEXT_PUBLIC_DATABASE_PASSWORD,               // Empty password for XAMPP
+  database: process.env.NEXT_PUBLIC_DATABASE_NAME,  // Replace with your actual database name
+  port: Number(process.env.NEXT_PUBLIC_DATABASE_PORT),                 // Default MySQL port
   connectionLimit: 20,        // Maximum concurrent connections
   waitForConnections: true,  
   queueLimit: 0,  
@@ -22,7 +23,7 @@ const pool = createPool({
   namedPlaceholders: true,    // Enables named placeholders
 });
 
-export async function Query({ query, values = [] }: QueryParams): Promise<unknown> {
+  export async function Query({ query, values = [] }: QueryParams): Promise<unknown> {
   let connection: PoolConnection | null = null;
   
   try {

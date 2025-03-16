@@ -40,7 +40,7 @@ export default function LoginForm() {
 
     try {
       await loginUserAccount(data)
-      router.push('/dashboard');
+      router.push('/');
 
     } catch (error) {
          // Extract the error message from the Error object
@@ -95,16 +95,22 @@ export default function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
         {/* Username Field */}
         <FormField
           control={form.control}
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Username</FormLabel>
+              <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Username
+              </FormLabel>
               <FormControl>
-                <Input placeholder="Enter your username" {...field} />
+                <Input 
+                  placeholder="Enter your username" 
+                  {...field} 
+                  className="h-12 rounded-lg border-gray-300 dark:border-gray-700 px-4 text-gray-900 dark:text-white dark:bg-gray-800"
+                />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -117,25 +123,26 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>Password</FormLabel>
+              <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Password
+              </FormLabel>
               <FormControl>
                 <div className="relative">
                   <Input
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     {...field}
-                    ref={field.ref} // Ensure proper form registration
-                    onChange={(e) => field.onChange(e.target.value)}
+                    className="h-12 w-full rounded-lg border-gray-300 dark:border-gray-700 px-4 text-gray-900 dark:text-white dark:bg-gray-800 pr-12"
                   />
                   <Button
                     type="button"
                     variant="ghost"
                     size="icon"
-                    className="absolute right-2 top-1/2 transform -translate-y-1/2"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
                     onClick={togglePasswordVisibility}
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-500 dark:text-gray-400" /> : <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
                     <span className="sr-only">
                       {showPassword ? "Hide password" : "Show password"}
                     </span>
@@ -148,7 +155,7 @@ export default function LoginForm() {
         />
 
         {/* Submit Button */}
-        <Button type="submit" disabled={isLoading} className="w-full">
+        <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium rounded-lg">
           {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>

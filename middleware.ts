@@ -1,3 +1,5 @@
+// middleware.ts
+
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 import { verifyToken } from '@/lib/jwt'
@@ -5,60 +7,63 @@ import { verifyToken } from '@/lib/jwt'
 export async function middleware(request: NextRequest) {
   // Get the token from cookies
   const token = request.cookies.get('token')?.value
-
-  // Define the current path
+  
+  // Define paths
   const path = request.nextUrl.pathname
-
-  // Define public and protected paths
-  const publicPaths = ['/', '/login']
-  const isPublicPath = publicPaths.includes(path)
-  const protectedPaths = ['/admin', '/dashboard'] // Add all protected routes here
-
-  // If no token exists
+  const isLoginPage = path === '/login'
+  const isProtectedRoute = path === '/' // Only protecting the root route
+  
+  // Case 1: No token exists
   if (!token) {
-    // If trying to access a protected route, redirect to login
-    if (protectedPaths.some(protectedPath => path.startsWith(protectedPath))) {
-      return NextResponse.redirect(new URL('/login', request.url))
+    // If accessing protected route without token -> redirect to login
+    if (isProtectedRoute) {
+      const loginUrl = new URL('/login', request.url)
+      return NextResponse.redirect(loginUrl)
     }
-    // If on a public path, allow access
+    // Allow access to public routes (including login)
     return NextResponse.next()
   }
-
+  
+  // Case 2: Token exists - verify it
   try {
-    // Verify the token
     const verifiedToken = await verifyToken(token)
-
-    // If token is invalid or expired
+    
+    // Invalid or expired token
     if (!verifiedToken) {
-      // Redirect to login for protected routes
-      if (protectedPaths.some(protectedPath => path.startsWith(protectedPath))) {
-        return NextResponse.redirect(new URL('/login', request.url))
+      // Clear invalid token cookie
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('token')
+      
+      // If protected route, redirect to login
+      if (isProtectedRoute) {
+        return response
       }
       return NextResponse.next()
     }
-
-    // If on login page and token is valid, redirect to dashboard
-    if (isPublicPath && verifiedToken) {
-      return NextResponse.redirect(new URL('/admin', request.url))
+    
+    // Valid token
+    // If on login page with valid token -> redirect to dashboard
+    if (isLoginPage) {
+      return NextResponse.redirect(new URL('/', request.url))
     }
-
-    // Allow access to the requested page
+    
+    // Allow access to requested protected page
     return NextResponse.next()
   } catch (error) {
-    // Any verification error redirects to login for protected routes
-    if (protectedPaths.some(protectedPath => path.startsWith(protectedPath))) {
-      return NextResponse.redirect(new URL('/login', request.url))
+    console.error('Authentication middleware error:', error)
+    
+    // On error for protected routes, redirect to login
+    if (isProtectedRoute) {
+      const response = NextResponse.redirect(new URL('/login', request.url))
+      response.cookies.delete('token') // Clear potentially corrupted token
+      return response
     }
+    
     return NextResponse.next()
   }
 }
 
-// Specify which routes this middleware should run on
+// Configure which routes this middleware applies to
 export const config = {
-  matcher: [
-    '/',
-    '/login',
-    '/register',
-    '/admin/:path*'  // This ensures all admin routes are covered
-  ]
+  matcher: ['/', '/login']
 }

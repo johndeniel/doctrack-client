@@ -9,8 +9,7 @@ const TOKEN_EXPIRES_IN = 60 * 60 * 24 // 1 day in seconds
 const COOKIE_OPTIONS = {
   httpOnly: true,
   secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const,
-  path: '/',
+  sameSite: 'strict' as const
 }
 
 interface TokenPayload {
