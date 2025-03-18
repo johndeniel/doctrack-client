@@ -8,8 +8,9 @@ const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET_KEY
 const TOKEN_EXPIRES_IN = 60 * 60 * 24 // 1 day in seconds
 const COOKIE_OPTIONS = {
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'strict' as const
+  secure: false, 
+  sameSite: 'lax' as const, 
+  path: '/'
 }
 
 interface TokenPayload {
@@ -53,21 +54,3 @@ export async function getTokenFromCookie(): Promise<string | null> {
   return (await cookies()).get('token')?.value || null
 }
 
-// Optional: Token refresh mechanism
-export async function refreshToken(currentToken: string): Promise<string | null> {
-  try {
-    const payload = await verifyToken(currentToken)
-    
-    if (payload) {
-      // Generate a new token with the same payload
-      return generateToken({
-        id: payload.id,
-        username: payload.username
-      })
-    }
-    return null
-  } catch (error) {
-    console.error('Token refresh failed:', error)
-    return null
-  }
-}

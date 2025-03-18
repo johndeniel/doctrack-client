@@ -3,6 +3,7 @@ import { Query } from '@/lib/db/mysql-connection-helper';
 import { generateToken, setTokenCookie } from '@/lib/jwt';
 import * as argon2 from 'argon2';
 import macaddress from 'macaddress';
+import { UAParser } from 'ua-parser-js';
 
 interface LoginRequestBody {
   username: string;
@@ -78,17 +79,15 @@ export async function POST(request: NextRequest) {
       username: user.account_username
     });
 
-    // Retrieve the client IP address from the headers (fallback to '0.0.0.0')
-    const clientIp =
-      request.headers.get('x-forwarded-for') ||
-      request.headers.get('x-real-ip') ||
-      '0.0.0.0';
+    // Parse the user-agent string using ua-parser-js
+    const parser = new UAParser(request.headers.get('user-agent') || 'unknown');
+    const userAgent = parser.getResult().ua.substring(0, MAX_DEVICE_IDENTIFIER_LENGTH);
+    
+    // Get device information using UAParser
+    const deviceInfo = parser.getResult();
+    const browser = deviceInfo.browser.name || 'unknown';
+    const os = deviceInfo.os.name || 'unknown';
 
-    // Get and trim the user-agent string to a maximum allowed length
-    let userAgent = request.headers.get('user-agent') || 'unknown';
-    if (userAgent.length > MAX_DEVICE_IDENTIFIER_LENGTH) {
-      userAgent = userAgent.substring(0, MAX_DEVICE_IDENTIFIER_LENGTH);
-    }
 
     // Attempt to get the MAC address; log error if it fails but continue with 'unknown'
     let macAddress = 'unknown';
@@ -98,20 +97,21 @@ export async function POST(request: NextRequest) {
       console.error('Failed to get MAC address:', macError);
     }
 
+    // Create a more detailed device identifier
+    const deviceIdentifier = `${macAddress}|${os}|${browser}`.substring(0, MAX_DEVICE_IDENTIFIER_LENGTH);
+
     // Insert session details into the user_authentication_sessions table
     const createSessionQuery = {
       query: `INSERT INTO user_authentication_sessions 
-              (authenticated_user_id, authentication_token, device_hardware_identifier, 
-              client_network_address, client_user_agent, session_expiration_timestamp, is_session_active) 
-              VALUES (?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), TRUE)`,
+              (authenticated_user_id, authentication_token, device_hardware_identifier, client_user_agent, session_expiration_timestamp, is_session_active) 
+              VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), TRUE)`,
       values: [
         user.account_uuid,
         token,
-        macAddress,
-        clientIp,
+        deviceIdentifier,
         userAgent
       ]
-    };
+    }
 
     await Query(createSessionQuery);
 
@@ -138,6 +138,10 @@ export async function POST(request: NextRequest) {
         user: {
           id: user.account_uuid,
           username: user.account_username
+        },
+        device: {
+          browser: browser,
+          os: os,
         }
       },
       { status: 200 }

@@ -110,9 +110,6 @@ CREATE TABLE IF NOT EXISTS user_authentication_sessions (
  -- Unique Device Hardware Identifier
  device_hardware_identifier TEXT NOT NULL,
  
- -- Client Network Address
- client_network_address TEXT NOT NULL,
- 
  -- Client Software and Environment Details
  client_user_agent TEXT NOT NULL,
  
