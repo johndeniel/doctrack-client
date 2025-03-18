@@ -1,6 +1,3 @@
-// this is component/login.tsx
-
-
 "use client"
 
 import { useState } from "react"
@@ -43,54 +40,117 @@ export default function LoginForm() {
 
     try {
       await loginUserAccount(data)
+      toast.success("Login successful", {
+        description: "Redirecting to dashboard...",
+      })
       router.push('/');
 
     } catch (error) {
-         // Extract the error message from the Error object
-         const errorMessage = error instanceof Error ? error.message : String(error);
-         console.error("Error creating account:", errorMessage);
-         
-         // Parse the error message to extract structured data
-         if (error instanceof Error && error.message.includes('HTTP error!')) {
-           try {
-             // Extract the status, message and details using regex
-             const statusMatch = error.message.match(/status: (\d+)/);
-             const codeMatch = error.message.match(/code: (\d+)/);
-             const messageMatch = error.message.match(/message: ([^,]+)/);
-             const detailsMatch = error.message.match(/details: (.+)$/);
-             
-             const statusCode = statusMatch ? statusMatch[1] : null;
-             const code = codeMatch ? codeMatch[1] : null;
-             const message = messageMatch ? messageMatch[1] : null;
-             const details = detailsMatch ? detailsMatch[1] : null;
-             
-             console.log('Structured error:', { 
-               statusCode, 
-               code,
-               message, 
-               details 
-             });
-   
-             toast.error(message || "Error creating account", {
-               action: {
-                 label: "Retry",
-                 onClick: () => console.log("Retry"),
-               },
-             });
-             
-           } catch (parseError) {
-             console.error('Failed to parse error details:', parseError);
-             toast.error("Error creating account", {
-               description: "An unexpected error occurred",
-             });
-           }
-         } else {
-           // Handle non-HTTP errors
-           toast.error("Error creating account", {
-             description: errorMessage,
-           });
-         }
-  
+      // Extract the error message from the Error object
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      console.error("Authentication failed:", errorMessage);
+      
+      // Try to extract the JSON data directly instead of using regex
+      if (error instanceof Error && error.message.includes('HTTP error!')) {
+        try {
+          // Extract the details part which contains the JSON
+          const detailsMatch = error.message.match(/details: ({.+})$/);
+          const statusMatch = error.message.match(/status: (\d+)/);
+          
+          const statusCode = statusMatch ? statusMatch[1] : "unknown";
+          
+          if (detailsMatch && detailsMatch[1]) {
+            // Parse the JSON details
+            const errorDetails = JSON.parse(detailsMatch[1]);
+            const errorCode = errorDetails.code || "UNKNOWN_ERROR";
+            
+            console.log("Parsed error details:", errorDetails);
+            
+            // Handle specific error codes based on the API response
+            if (errorCode === "INVALID_CREDENTIALS") {
+              toast.error("Authentication Failed", {
+                description: "The username or password you entered is incorrect.",
+                action: {
+                  label: "Try Again",
+                  onClick: () => form.setFocus("username"),
+                },
+              });
+            } else if (errorCode === "VALIDATION_ERROR") {
+              toast.error("Invalid Input", {
+                description: "Please ensure all required fields are filled correctly.",
+                action: {
+                  label: "Review",
+                  onClick: () => form.setFocus("username"),
+                },
+              });
+            } else {
+              // Handle other API error codes
+              toast.error("Login Failed", {
+                description: errorDetails.message || "An unexpected error occurred during login.",
+                action: {
+                  label: "Retry",
+                  onClick: () => form.handleSubmit(onSubmit)(),
+                },
+              });
+            }
+          } else if (statusCode === "500") {
+            toast.error("Server Error", {
+              description: "An internal server error occurred. Please try again later.",
+              action: {
+                label: "Retry",
+                onClick: () => form.handleSubmit(onSubmit)(),
+              },
+            });
+          } else {
+            // Fallback for when details can't be parsed
+            toast.error("Authentication Failed", {
+              description: "An error occurred during login.",
+              action: {
+                label: "Retry",
+                onClick: () => form.handleSubmit(onSubmit)(),
+              },
+            });
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error details:', parseError);
+          
+          // Simpler fallback based just on HTTP status code
+          if (errorMessage.includes('status: 401')) {
+            toast.error("Authentication Failed", {
+              description: "The username or password you entered is incorrect.",
+              action: {
+                label: "Try Again",
+                onClick: () => form.setFocus("username"),
+              },
+            });
+          } else if (errorMessage.includes('status: 400')) {
+            toast.error("Invalid Input", {
+              description: "Please ensure all required fields are filled correctly.",
+              action: {
+                label: "Review",
+                onClick: () => form.setFocus("username"),
+              },
+            });
+          } else {
+            toast.error("Login Failed", {
+              description: "An unexpected error occurred during login.",
+              action: {
+                label: "Retry",
+                onClick: () => form.handleSubmit(onSubmit)(),
+              },
+            });
+          }
+        }
+      } else {
+        // Handle connection errors or other unexpected errors
+        toast.error("Connection Error", {
+          description: "Unable to connect to the authentication service. Please check your internet connection.",
+          action: {
+            label: "Retry",
+            onClick: () => form.handleSubmit(onSubmit)(),
+          },
+        });
+      }
     } finally {
       setIsLoading(false)
     }
@@ -159,7 +219,7 @@ export default function LoginForm() {
 
         {/* Submit Button */}
         <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium rounded-lg">
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? "Authenticating..." : "Login"}
         </Button>
       </form>
     </Form>

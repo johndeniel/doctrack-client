@@ -98,33 +98,34 @@ CREATE TABLE IF NOT EXISTS users_profile_image (
 
 -- User Authentication Sessions Table
 CREATE TABLE IF NOT EXISTS user_authentication_sessions (
- -- Session Unique Identifier
- session_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
- 
- -- Foreign Key Linking to User Account
- authenticated_user_id VARCHAR(36) NOT NULL,
- 
- -- Secure Authentication Token
- authentication_token VARCHAR(500) UNIQUE NOT NULL,
- 
- -- Unique Device Hardware Identifier
- device_hardware_identifier TEXT NOT NULL,
- 
- -- Client Software and Environment Details
- client_user_agent TEXT NOT NULL,
- 
- -- Session Initialization Timestamp
- session_initiated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
- 
- -- Session Expiration Timestamp
- session_expiration_timestamp TIMESTAMP NOT NULL,
- 
- -- Current Session Activation Status
- is_session_active BOOLEAN DEFAULT TRUE,
- 
- -- Token Security Validation
- CONSTRAINT secure_token_length CHECK (LENGTH(authentication_token) >= 32 AND LENGTH(authentication_token) <= 500),
- 
- -- Foreign Key Constraint linking to users_account table
- FOREIGN KEY (authenticated_user_id) REFERENCES users_account(account_uuid) ON DELETE CASCADE
+  -- Session Unique Identifier
+  session_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  
+  -- Foreign Key Linking to User Account
+  authenticated_user_id VARCHAR(36) NOT NULL,
+  
+  -- Secure Authentication Token
+  authentication_token VARCHAR(500) NOT NULL,
+  
+  -- Browser Information
+  client_browser_name VARCHAR(100),
+  client_browser_version VARCHAR(50),
+  
+  -- Operating System Information
+  client_os_name VARCHAR(100),
+  client_os_version VARCHAR(50),
+  
+  -- Session Timing Information
+  session_initiated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  session_expiration_timestamp TIMESTAMP NOT NULL,
+  
+  -- Token Security Validation
+  CONSTRAINT secure_token_length CHECK (LENGTH(authentication_token) >= 32 AND LENGTH(authentication_token) <= 500),
+  
+  -- Foreign Key Constraint linking to users_account table
+  FOREIGN KEY (authenticated_user_id) REFERENCES users_account(account_uuid) ON DELETE CASCADE,
+  
+  -- Index for efficient session lookup
+  INDEX idx_auth_token (authentication_token),
+  INDEX idx_user_id (authenticated_user_id)
 );

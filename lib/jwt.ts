@@ -1,5 +1,10 @@
 import { jwtVerify, SignJWT } from 'jose'
 import { cookies } from 'next/headers'
+interface TokenPayload {
+  id: string
+  username: string
+  exp?: number
+}
 
 // More secure secret generation
 const JWT_SECRET = process.env.NEXT_PUBLIC_JWT_SECRET_KEY
@@ -11,12 +16,6 @@ const COOKIE_OPTIONS = {
   secure: false, 
   sameSite: 'lax' as const, 
   path: '/'
-}
-
-interface TokenPayload {
-  id: string
-  username: string
-  exp?: number
 }
 
 export async function generateToken(payload: Omit<TokenPayload, 'exp'>): Promise<string> {
@@ -53,4 +52,3 @@ export async function removeTokenCookie() {
 export async function getTokenFromCookie(): Promise<string | null> {
   return (await cookies()).get('token')?.value || null
 }
-

@@ -6,7 +6,7 @@ import { createPool, PoolConnection } from 'mysql2/promise';
 
 interface QueryParams {
   query: string;
-  values?: (string | number | bigint | boolean | File | Buffer<ArrayBufferLike> | null)[];
+  values?: (string | number | bigint | boolean | Date | File | Buffer<ArrayBufferLike> | null)[];
 }
 
 // Parse the connection string from environment variable

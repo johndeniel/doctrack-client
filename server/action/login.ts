@@ -16,21 +16,23 @@ export async function loginUserAccount(accountDetails: LoginFormValues) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify(httpRequest),
+      credentials: "include",
     })
 
     const result = await response.json()
 
     if (!response.ok) {
-      console.error("Request failed:", result)
+      console.error("Authentication failed:", result)
+      
       throw new Error(
-        `HTTP error! status: ${response.status}, message: ${result.message}, details: ${JSON.stringify(result.details)}`
+        `HTTP error! status: ${response.status}, details: ${JSON.stringify(result)}`
       )
     }
 
-    console.log("Success:", result)
+    console.log("Authentication successful:", result)
     return result
   } catch (error) {
-    console.error("Error logging in:", error)
+    console.error("Error during authentication:", error)
     throw error
   }
 }

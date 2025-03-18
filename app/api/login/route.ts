@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Query } from '@/lib/db/mysql-connection-helper';
 import { generateToken, setTokenCookie } from '@/lib/jwt';
 import * as argon2 from 'argon2';
-import macaddress from 'macaddress';
 import { UAParser } from 'ua-parser-js';
 
+// TypeScript interfaces for request/response data
 interface LoginRequestBody {
   username: string;
   password: string;
@@ -16,7 +16,22 @@ interface UserRecord {
   account_password_hash: string;
 }
 
-const MAX_DEVICE_IDENTIFIER_LENGTH = 100;
+interface DeviceInfo {
+  browserName: string | undefined;
+  browserVersion: string | undefined;
+  osName: string | undefined;
+  osVersion: string | undefined;
+}
+
+interface AuthenticationResponse {
+  code: string;
+  message: string;
+  user?: {
+    id: string;
+    username: string;
+  };
+  device?: DeviceInfo;
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -80,38 +95,38 @@ export async function POST(request: NextRequest) {
     });
 
     // Parse the user-agent string using ua-parser-js
-    const parser = new UAParser(request.headers.get('user-agent') || 'unknown');
-    const userAgent = parser.getResult().ua.substring(0, MAX_DEVICE_IDENTIFIER_LENGTH);
-    
-    // Get device information using UAParser
+    const userAgentString = request.headers.get('user-agent') || 'unknown';
+    const parser = new UAParser(userAgentString);
     const deviceInfo = parser.getResult();
-    const browser = deviceInfo.browser.name || 'unknown';
-    const os = deviceInfo.os.name || 'unknown';
 
-
-    // Attempt to get the MAC address; log error if it fails but continue with 'unknown'
-    let macAddress = 'unknown';
-    try {
-      macAddress = await macaddress.one();
-    } catch (macError) {
-      console.error('Failed to get MAC address:', macError);
-    }
-
-    // Create a more detailed device identifier
-    const deviceIdentifier = `${macAddress}|${os}|${browser}`.substring(0, MAX_DEVICE_IDENTIFIER_LENGTH);
+    // Extract only the browser and OS information
+    const deviceData: DeviceInfo = {
+      browserName: deviceInfo.browser.name,
+      browserVersion: deviceInfo.browser.version,
+      osName: deviceInfo.os.name,
+      osVersion: deviceInfo.os.version
+    };
 
     // Insert session details into the user_authentication_sessions table
     const createSessionQuery = {
       query: `INSERT INTO user_authentication_sessions 
-              (authenticated_user_id, authentication_token, device_hardware_identifier, client_user_agent, session_expiration_timestamp, is_session_active) 
-              VALUES (?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY), TRUE)`,
+              (authenticated_user_id, 
+               authentication_token, 
+               client_browser_name,
+               client_browser_version,
+               client_os_name,
+               client_os_version,
+               session_expiration_timestamp) 
+              VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))`,
       values: [
         user.account_uuid,
         token,
-        deviceIdentifier,
-        userAgent
+        deviceData.browserName || 'unknown',
+        deviceData.browserVersion || 'unknown',
+        deviceData.osName || 'unknown',
+        deviceData.osVersion || 'unknown'
       ]
-    }
+    };
 
     await Query(createSessionQuery);
 
@@ -131,21 +146,17 @@ export async function POST(request: NextRequest) {
     await setTokenCookie(token);
 
     // Return a success response with a specific code and user details
-    return NextResponse.json(
-      {
-        code: 'AUTHENTICATION_SUCCESS',
-        message: 'Authentication successful',
-        user: {
-          id: user.account_uuid,
-          username: user.account_username
-        },
-        device: {
-          browser: browser,
-          os: os,
-        }
+    const response: AuthenticationResponse = {
+      code: 'AUTHENTICATION_SUCCESS',
+      message: 'Authentication successful',
+      user: {
+        id: user.account_uuid,
+        username: user.account_username
       },
-      { status: 200 }
-    );
+      device: deviceData
+    };
+
+    return NextResponse.json(response, { status: 200 });
   } catch (error) {
     console.error('Authentication error:', error);
     // Rollback transaction in case of any errors
