@@ -351,7 +351,6 @@ const generateDummyTasks = (): Task[] => {
 }
 
 
-
 export default function CalendarBoard() {
   const router = useRouter()
   const [currentDate, setCurrentDate] = useState(new Date())
@@ -496,6 +495,12 @@ export default function CalendarBoard() {
     return isToday(day) || isFuture(day)
   }
 
+  // Custom tooltip styles
+  const tooltipStyles = {
+    content: "bg-white text-black border border-gray-200 shadow-sm",
+    taskTooltip: "max-w-[300px] p-0 overflow-hidden bg-white text-black border border-gray-200 shadow-sm",
+  }
+
   return (
     <TasksContext.Provider value={{ tasks, setTasks }}>
       <TooltipProvider>
@@ -568,9 +573,11 @@ export default function CalendarBoard() {
                                       {getTasksForDay(day).length}
                                     </span>
                                   </TooltipTrigger>
-                                  <TooltipContent side="top" className="text-xs">
-                                    {getTasksForDay(day).length} {getTasksForDay(day).length === 1 ? "task" : "tasks"}{" "}
-                                    on this day
+                                  <TooltipContent side="top" className={tooltipStyles.content}>
+                                    <div className="text-xs p-2">
+                                      {getTasksForDay(day).length} {getTasksForDay(day).length === 1 ? "task" : "tasks"}{" "}
+                                      on this day
+                                    </div>
                                   </TooltipContent>
                                 </Tooltip>
                               )}
@@ -596,13 +603,10 @@ export default function CalendarBoard() {
                                       <div className="truncate">{task.title}</div>
                                     </div>
                                   </TooltipTrigger>
-                                  <TooltipContent
-                                    side="right"
-                                    className="max-w-[280px] p-3 shadow-md border border-border/30"
-                                  >
-                                    <div className="space-y-2 relative">
-                                      <div className="flex items-start justify-between">
-                                        <div className="flex items-center gap-2 pr-2">
+                                  <TooltipContent side="right" className={tooltipStyles.taskTooltip}>
+                                    <div className="p-3">
+                                      <div className="flex items-start justify-between gap-2 mb-2">
+                                        <div className="flex items-center gap-2">
                                           <div
                                             className={cn(
                                               "w-1 h-4 rounded-sm shrink-0",
@@ -619,13 +623,16 @@ export default function CalendarBoard() {
                                       </div>
 
                                       {task.description && (
-                                        <p className="text-[10px] text-muted-foreground leading-normal pt-1 border-t border-border/10">
-                                          {task.description}
-                                        </p>
+                                        <>
+                                          <p className="text-[10px] text-muted-foreground leading-normal mb-2">
+                                            {task.description}
+                                          </p>
+                                          <div className="h-px bg-border/40 my-2"></div>
+                                        </>
                                       )}
 
-                                      <div className="flex items-center justify-between">
-                                        <p className="text-[10px] text-muted-foreground">
+                                      <div className="flex items-center justify-between text-[10px]">
+                                        <p className="text-muted-foreground">
                                           Due: {format(parseDate(task.date), "MMM d, yyyy")}
                                         </p>
 
@@ -681,7 +688,7 @@ export default function CalendarBoard() {
                   </DialogTitle>
                   <p className="text-xs text-muted-foreground flex items-center">
                     <Calendar className="h-3 w-3 mr-1.5 opacity-70" />
-                    {selectedDate ? getTasksForDay(selectedDate).length ?? 0 : 0}{" "}
+                    {selectedDate && getTasksForDay(selectedDate).length}{" "}
                     {(selectedDate ? getTasksForDay(selectedDate).length : 0) === 1 ? "task" : "tasks"}
                   </p>
                 </div>
