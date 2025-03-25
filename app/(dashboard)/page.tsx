@@ -35,53 +35,55 @@ import type {
 } from "@/lib/types"
 
 /**
- * Main TasksView component for task management application
- * Manages state, data handling, and UI interactions
+ * Main TasksView component for task management application.
+ * Manages state, data handling, and UI interactions.
  */
 export default function TasksView() {
   const router = useRouter()
 
-  // State Management
+  // State Management: Tasks data and view mode
   const [tasks, setTasks] = useState<Task[]>([])
   const [viewMode, setViewMode] = useState<ViewMode>("grid")
 
-  // Filter State
+  // Filter State: Search query, priority and status filters
   const [searchQuery, setSearchQuery] = useState("")
   const [priorityFilter, setPriorityFilter] = useState<Priority[]>([])
   const [statusFilter, setStatusFilter] = useState<CompletionStatus[]>([])
 
-  // Sorting State
+  // Sorting State: Sorting by option and direction
   const [sortBy, setSortBy] = useState<TaskSortOption>("date")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
 
   // Load Sample Tasks on Component Mount
   useEffect(() => {
+    // Generate sample tasks and store in state and localStorage
     const sampleTasks = generateSampleTasks()
     setTasks(sampleTasks)
     localStorage.setItem("calendarTasks", JSON.stringify(sampleTasks))
   }, [])
 
   // Memoized Task Filtering and Sorting
+  // This recalculates only when dependencies change
   const filteredAndSortedTasks = useMemo(() => {
     const filteredTasks = filterTasks(tasks, searchQuery, priorityFilter, statusFilter)
     return sortTasks(filteredTasks, sortBy, sortDirection)
   }, [tasks, searchQuery, priorityFilter, statusFilter, sortBy, sortDirection])
 
-  // Toggle Priority Filter with Optimization
+  // Toggle Priority Filter with Optimization using useCallback
   const handleTogglePriorityFilter = useCallback((priority: Priority) => {
-    setPriorityFilter(prev => 
-      prev.includes(priority) 
-        ? prev.filter(p => p !== priority) 
-        : [...prev, priority]
+    setPriorityFilter(prev =>
+      prev.includes(priority)
+        ? prev.filter(p => p !== priority) // Remove filter if already included
+        : [...prev, priority]               // Add filter if not included
     )
   }, [])
 
-  // Toggle Status Filter with Optimization
+  // Toggle Status Filter with Optimization using useCallback
   const handleToggleStatusFilter = useCallback((status: CompletionStatus) => {
-    setStatusFilter(prev => 
-      prev.includes(status) 
-        ? prev.filter(s => s !== status) 
-        : [...prev, status]
+    setStatusFilter(prev =>
+      prev.includes(status)
+        ? prev.filter(s => s !== status) // Remove filter if already included
+        : [...prev, status]              // Add filter if not included
     )
   }, [])
 
@@ -92,46 +94,50 @@ export default function TasksView() {
     setSearchQuery("")
   }, [])
 
-  // Intelligent Sorting Logic
+  // Intelligent Sorting Logic to toggle sort direction
   const handleToggleSort = useCallback((sortType: TaskSortOption) => {
     setSortBy(current => sortType !== current ? sortType : current)
-    setSortDirection(prev => 
-      sortBy === sortType 
-        ? (prev === "asc" ? "desc" : "asc") 
+    setSortDirection(prev =>
+      sortBy === sortType
+        ? (prev === "asc" ? "desc" : "asc")
         : "asc"
     )
   }, [sortBy])
 
-  // Navigation Handlers
+  // Navigation handler when a task is clicked
   const handleTaskClick = useCallback((taskId: string) => {
     router.push(`/task-info?id=${taskId}`)
   }, [router])
 
+  // Navigation handler for adding a new task
   const handleAddTask = useCallback(() => {
     router.push("/add-task")
   }, [router])
 
-  // Task Completion Toggle with Immutable Update
+  // Task Completion Toggle with Immutable Update pattern
   const handleToggleTaskCompletion = useCallback((taskId: string, event: React.MouseEvent) => {
+    // Prevent event bubbling
     event.stopPropagation()
 
-    const updatedTasks = tasks.map(task => 
-      task.id === taskId 
+    // Map through tasks to toggle the completion state
+    const updatedTasks = tasks.map(task =>
+      task.id === taskId
         ? {
-            ...task, 
+            ...task,
             completed: !task.completed,
             dateCompleted: !task.completed ? formatDateToString(new Date()) : undefined
-          } 
+          }
         : task
     )
 
+    // Update state and localStorage with the updated tasks
     setTasks(updatedTasks)
     localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks))
   }, [tasks])
 
-  // Calculate Active Filters
-  const activeFiltersCount = useMemo(() => 
-    priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0), 
+  // Calculate count of active filters for display
+  const activeFiltersCount = useMemo(() =>
+    priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0),
     [priorityFilter, statusFilter, searchQuery]
   )
 
@@ -145,66 +151,70 @@ export default function TasksView() {
           </div>
         </div>
 
-       {/* Search, filter, and sort controls */}
-<div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
-  <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
-    {/* Search input - increased width */}
-    <TaskSearch 
-      searchQuery={searchQuery} 
-      onSearchChange={setSearchQuery}
-    />
+        {/* Search, Filter, and Sort Controls */}
+        <div className="flex flex-col md:flex-row gap-3 items-start md:items-center justify-between">
+          <div className="flex flex-col md:flex-row gap-3 items-start md:items-center">
+            {/* Search Input */}
+            <TaskSearch
+              searchQuery={searchQuery}
+              onSearchChange={setSearchQuery}
+            />
+            <div className="flex items-center gap-2">
+              {/* Filter Dropdown */}
+              <TaskFilters
+                filterState={{ priorityFilter, statusFilter, searchQuery }}
+                onTogglePriorityFilter={handleTogglePriorityFilter}
+                onToggleStatusFilter={handleToggleStatusFilter}
+                onClearFilters={handleClearFilters}
+              />
+              {/* Sort Dropdown */}
+              <TaskSort
+                sortState={{ sortBy, sortDirection }}
+                onToggleSort={handleToggleSort}
+              />
+            </div>
+          </div>
 
-    <div className="flex items-center gap-2">
-      {/* Filter dropdown */}
-      <TaskFilters
-        filterState={{ priorityFilter, statusFilter, searchQuery }}
-        onTogglePriorityFilter={handleTogglePriorityFilter}
-        onToggleStatusFilter={handleToggleStatusFilter}
-        onClearFilters={handleClearFilters}
-      />
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-2">
+              {/* Add Task Button */}
+              <Button
+                variant="default"
+                size="sm"
+                onClick={handleAddTask}
+                className="h-8"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Add Task
+              </Button>
+              {/* View Mode Toggle */}
+              <ViewToggle
+                viewMode={viewMode}
+                onViewModeChange={(mode) => setViewMode(mode)}
+              />
+            </div>
+          </div>
+        </div>
 
-      {/* Sort dropdown */}
-      <TaskSort 
-        sortState={{ sortBy, sortDirection }} 
-        onToggleSort={handleToggleSort} 
-      />
-    </div>
-  </div>
-
-  <div className="flex flex-col items-end gap-2">
-    <div className="flex items-center gap-2">
-      {/* Add Task button */}
-      <Button 
-        variant="default" 
-        size="sm" 
-        onClick={handleAddTask} 
-        className="h-8"
-      >
-        <Plus className="h-4 w-4 mr-2" />
-        Add Task
-      </Button>
-      
-      {/* View mode toggle */}
-      <ViewToggle 
-        viewMode={viewMode} 
-        onViewModeChange={(mode) => setViewMode(mode)} 
-      />
-    </div>
-  </div>
-</div>
-
-        {/* Active filters display */}
+        {/* Active Filters Display */}
         {activeFiltersCount > 0 && (
           <div className="flex items-center gap-2 text-xs text-muted-foreground flex-wrap">
             <span>Filters:</span>
+            {/* Display active search filter */}
             {searchQuery && (
               <div className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full">
                 <span>Title: {searchQuery}</span>
-                <Button variant="ghost" size="icon" className="h-4 w-4 p-0" onClick={() => setSearchQuery("")}>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-4 w-4 p-0"
+                  onClick={() => setSearchQuery("")}
+                >
                   <X className="h-3 w-3" />
                 </Button>
               </div>
             )}
+            {/* Display active priority filters */}
             {priorityFilter.map((priority) => (
               <div key={priority} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full">
                 <span>{priority.charAt(0).toUpperCase() + priority.slice(1)} Priority</span>
@@ -218,14 +228,15 @@ export default function TasksView() {
                 </Button>
               </div>
             ))}
+            {/* Display active status filters */}
             {statusFilter.map((status) => (
               <div key={status} className="flex items-center gap-1 bg-muted px-2 py-1 rounded-full">
                 <span>
-                  {status === "onTime"
+                  {status === "completed on time"
                     ? "Completed On Time"
-                    : status === "late"
-                      ? "Completed Late"
-                      : status.charAt(0).toUpperCase() + status.slice(1)}
+                    : status === "completed late"
+                    ? "Completed Late"
+                    : status.charAt(0).toUpperCase() + status.slice(1)}
                 </span>
                 <Button
                   variant="ghost"
@@ -237,27 +248,36 @@ export default function TasksView() {
                 </Button>
               </div>
             ))}
-            <Button variant="ghost" size="sm" className="h-6 text-xs" onClick={handleClearFilters}>
+            {/* Button to clear all active filters */}
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-6 text-xs"
+              onClick={handleClearFilters}
+            >
               Clear all
             </Button>
           </div>
         )}
 
-        {/* Task list/grid container */}    
-        <ScrollArea className="h-[670px] pr-4 overflow-y-auto">
+        {/* Task List/Grid Container */}
+        <ScrollArea className="h-[670px] pr-4 overflow-y-auto mt-2">
           {filteredAndSortedTasks.length === 0 ? (
+            // Display empty state if no tasks match filters
             <EmptyState
               hasActiveFilters={activeFiltersCount > 0}
               onClearFilters={handleClearFilters}
               onAddTask={handleAddTask}
             />
           ) : viewMode === "list" ? (
+            // Render tasks in list view
             <TaskList
               tasks={filteredAndSortedTasks}
               onTaskClick={handleTaskClick}
               onToggleTaskCompletion={handleToggleTaskCompletion}
             />
           ) : (
+            // Render tasks in grid view
             <TaskGrid
               tasks={filteredAndSortedTasks}
               onTaskClick={handleTaskClick}
@@ -265,9 +285,12 @@ export default function TasksView() {
             />
           )}
         </ScrollArea>
-        <ThemeToggle />
+
+        {/* Theme Toggle Button */}
+        <div className="flex justify-end mt-">
+          <ThemeToggle />
+        </div>
       </div>
     </div>
   )
 }
-

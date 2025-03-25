@@ -8,9 +8,10 @@ import {
   DropdownMenuCheckboxItem,
   DropdownMenuTrigger,
   DropdownMenuSeparator,
-  DropdownMenuLabel,
 } from "@/components/ui/dropdown-menu"
 import type { Priority, CompletionStatus, FilterState } from "@/lib/types"
+import { cn } from "@/lib/utils" // Assuming you have a cn utility for conditional classes
+import React from "react"
 
 interface TaskFiltersProps {
   filterState: FilterState
@@ -19,10 +20,10 @@ interface TaskFiltersProps {
   onClearFilters: () => void
 }
 
-/**
- * TaskFilters component provides UI for filtering tasks by priority and status
- * It manages the dropdown menu and active filter indicators
- */
+// Predefined filter options with type safety
+const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"]
+const STATUS_OPTIONS: CompletionStatus[] = ["active", "overdue", "completed on time", "completed late"]
+
 export function TaskFilters({
   filterState,
   onTogglePriorityFilter,
@@ -31,81 +32,101 @@ export function TaskFilters({
 }: TaskFiltersProps) {
   const { priorityFilter, statusFilter, searchQuery } = filterState
 
-  // Calculate the total number of active filters
-  const activeFiltersCount = priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0)
+  // Memoize active filters count to prevent unnecessary re-renders
+  const activeFiltersCount = React.useMemo(() => 
+    priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0), 
+    [priorityFilter, statusFilter, searchQuery]
+  )
+
+  // Helper function to format filter label
+  const formatFilterLabel = (filter: string) => {
+    switch (filter) {
+      case "completed on time":
+        return "Completed On Time"
+      case "completed late":
+        return "Completed Late"
+      default:
+        return filter.charAt(0).toUpperCase() + filter.slice(1)
+    }
+  }
 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-9">
-          <Filter className="h-4 w-4 mr-2" />
-          Filter
+        <Button 
+          variant="outline" 
+          size="sm" 
+          className={cn(
+            "h-9 border-neutral-300 transition-colors duration-200",
+            activeFiltersCount > 0 && "border-primary"
+          )}
+        >
+          <Filter className="h-4 w-4 mr-2 opacity-70" />
+          Filters
           {activeFiltersCount > 0 && (
-            <span className="ml-1.5 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px]">
+            <span 
+              className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+              aria-label={`${activeFiltersCount} active filters`}
+            >
               {activeFiltersCount}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-56">
-        <DropdownMenuLabel>Priority</DropdownMenuLabel>
-        <DropdownMenuCheckboxItem
-          checked={priorityFilter.includes("high")}
-          onCheckedChange={() => onTogglePriorityFilter("high")}
-        >
-          <span className="text-[hsl(var(--priority-high-text))]">High Priority</span>
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={priorityFilter.includes("medium")}
-          onCheckedChange={() => onTogglePriorityFilter("medium")}
-        >
-          <span className="text-[hsl(var(--priority-medium-text))]">Medium Priority</span>
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={priorityFilter.includes("low")}
-          onCheckedChange={() => onTogglePriorityFilter("low")}
-        >
-          <span className="text-[hsl(var(--priority-low-text))]">Low Priority</span>
-        </DropdownMenuCheckboxItem>
+      <DropdownMenuContent 
+        align="end" 
+        className="w-56 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700"
+      >
+        <div className="p-2">
+          {/* Priority Filters */}
+          <div className="mb-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+            Priority
+          </div>
+          {PRIORITY_OPTIONS.map((priority) => (
+            <DropdownMenuCheckboxItem
+              key={priority}
+              checked={priorityFilter.includes(priority)}
+              onCheckedChange={() => onTogglePriorityFilter(priority)}
+              className="rounded-md"
+            >
+              {formatFilterLabel(priority)} Priority
+            </DropdownMenuCheckboxItem>
+          ))}
 
-        <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-2 bg-neutral-200 dark:bg-neutral-700" />
 
-        <DropdownMenuLabel>Status</DropdownMenuLabel>
-        <DropdownMenuCheckboxItem
-          checked={statusFilter.includes("active")}
-          onCheckedChange={() => onToggleStatusFilter("active")}
-        >
-          <span className="text-[hsl(var(--status-active-text))]">Active</span>
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={statusFilter.includes("overdue")}
-          onCheckedChange={() => onToggleStatusFilter("overdue")}
-        >
-          <span className="text-[hsl(var(--status-overdue-text))]">Overdue</span>
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={statusFilter.includes("onTime")}
-          onCheckedChange={() => onToggleStatusFilter("onTime")}
-        >
-          <span className="text-[hsl(var(--status-completed-text))]">Completed On Time</span>
-        </DropdownMenuCheckboxItem>
-        <DropdownMenuCheckboxItem
-          checked={statusFilter.includes("late")}
-          onCheckedChange={() => onToggleStatusFilter("late")}
-        >
-          <span className="text-[hsl(var(--status-late-text))]">Completed Late</span>
-        </DropdownMenuCheckboxItem>
+          {/* Status Filters */}
+          <div className="mb-2 text-xs font-semibold text-neutral-500 dark:text-neutral-400 uppercase tracking-wider">
+            Status
+          </div>
+          {STATUS_OPTIONS.map((status) => (
+            <DropdownMenuCheckboxItem
+              key={status}
+              checked={statusFilter.includes(status)}
+              onCheckedChange={() => onToggleStatusFilter(status)}
+              className="rounded-md"
+            >
+              {formatFilterLabel(status)}
+            </DropdownMenuCheckboxItem>
+          ))}
 
-        <DropdownMenuSeparator />
-
-        {activeFiltersCount > 0 && (
-          <Button variant="ghost" size="sm" className="w-full justify-start text-xs h-8 mt-1" onClick={onClearFilters}>
-            <X className="h-3.5 w-3.5 mr-2" />
-            Clear all filters
-          </Button>
-        )}
+          {activeFiltersCount > 0 && (
+            <>
+              <DropdownMenuSeparator className="my-2 bg-neutral-200 dark:bg-neutral-700" />
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={onClearFilters}
+                className="w-full justify-start text-xs h-8 rounded-md"
+                aria-label="Clear all filters"
+              >
+                <X className="h-3.5 w-3.5 mr-2 opacity-70" />
+                Clear all filters
+              </Button>
+            </>
+          )}
+        </div>
       </DropdownMenuContent>
     </DropdownMenu>
   )
 }
-

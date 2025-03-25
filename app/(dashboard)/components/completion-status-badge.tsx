@@ -10,7 +10,7 @@ const parseDate = (dateString: string): Date => {
 
 // Function to get the completion status of a task
 export const getCompletionStatus = (task: Task): CompletionStatus => {
-  if (!task.completed) {
+  if (!task.dateCompleted) {
     // If task is not completed and due date is in the past, it's overdue
     return isPast(parseDate(task.date)) && !isToday(parseDate(task.date)) ? "overdue" : "active"
   }
@@ -21,11 +21,11 @@ export const getCompletionStatus = (task: Task): CompletionStatus => {
     const completedDate = parseDate(task.dateCompleted)
 
     // If completed on or before due date, it's on time
-    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate) ? "onTime" : "late"
+    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate) ? "completed on time" : "completed late"
   }
 
   // Default to on time if dateCompleted is missing but task is marked as completed
-  return "onTime"
+  return "completed on time"
 }
 
 // Update the CompletionStatusBadge component to use the new premium styling
@@ -33,13 +33,13 @@ export const CompletionStatusBadge = ({ task }: { task: Task }) => {
   const status = getCompletionStatus(task)
 
   const statusConfig = {
-    onTime: {
+    "completed on time": {
       label: "Completed On Time",
       className:
         "text-[hsl(var(--status-completed-text))] bg-[hsl(var(--status-completed-bg))] border-[hsl(var(--status-completed-border))]",
       icon: <CheckCircle className="h-2.5 w-2.5 mr-1" />,
     },
-    late: {
+    "completed late": {
       label: "Completed Late",
       className:
         "text-[hsl(var(--status-late-text))] bg-[hsl(var(--status-late-bg))] border-[hsl(var(--status-late-border))]",
@@ -68,4 +68,3 @@ export const CompletionStatusBadge = ({ task }: { task: Task }) => {
     </span>
   )
 }
-
