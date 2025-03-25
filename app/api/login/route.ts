@@ -14,6 +14,7 @@ interface UserRecord {
   account_uuid: string;
   account_username: string;
   account_password_hash: string;
+  account_division_designation: string; // Added division designation
 }
 
 interface DeviceInfo {
@@ -29,6 +30,7 @@ interface AuthenticationResponse {
   user?: {
     id: string;
     username: string;
+    division_designation: string; // Added division designation
   };
   device?: DeviceInfo;
 }
@@ -52,10 +54,10 @@ export async function POST(request: NextRequest) {
     // Start database transaction
     await Query({ query: 'BEGIN' });
 
-    // Query the database for the user by username
+    // Query the database for the user by username - UPDATED QUERY
     const findUserQuery = {
       query:
-        'SELECT account_uuid, account_username, account_password_hash FROM users_account WHERE account_username = ?',
+        'SELECT account_uuid, account_username, account_password_hash, account_division_designation FROM users_account WHERE account_username = ?',
       values: [username]
     };
 
@@ -88,10 +90,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate a JWT token for the authenticated user
+    // Generate a JWT token for the authenticated user - UPDATED TOKEN GENERATION
     const token = await generateToken({
       id: user.account_uuid,
-      username: user.account_username
+      username: user.account_username,
+      division: user.account_division_designation
     });
 
     // Parse the user-agent string using ua-parser-js
@@ -151,7 +154,8 @@ export async function POST(request: NextRequest) {
       message: 'Authentication successful',
       user: {
         id: user.account_uuid,
-        username: user.account_username
+        username: user.account_username,
+        division_designation: user.account_division_designation
       },
       device: deviceData
     };

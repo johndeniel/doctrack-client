@@ -3,6 +3,7 @@ import { cookies } from 'next/headers'
 interface TokenPayload {
   id: string
   username: string
+  division: string
   exp?: number
 }
 

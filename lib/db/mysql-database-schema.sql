@@ -129,3 +129,112 @@ CREATE TABLE IF NOT EXISTS user_authentication_sessions (
   INDEX idx_auth_token (authentication_token),
   INDEX idx_user_id (authenticated_user_id)
 );
+
+
+-- Document Tracking Ticket Table
+CREATE TABLE IF NOT EXISTS document_ticket (
+  -- Primary Key: UUID generated automatically for each new document
+  -- Ensures globally unique identification across systems and databases
+  document_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  
+  -- Document Title: The formal name or subject of the document
+  -- Provides a descriptive identifier for the document in the system
+  document_title VARCHAR(1000) NOT NULL,
+  
+  -- Encoder Reference: User who created the document record
+  -- Links to the account that initially entered the document into the system
+  document_encoder_account_uuid VARCHAR(36) NOT NULL,
+  
+  -- Document Classification: Type of document being tracked
+  -- Differentiates between physical documents and electronic correspondence
+  document_type ENUM('Physical Document', 'Digital Document') NOT NULL,
+  
+  -- Document Source: Origin classification of the document
+  -- Identifies whether document originated from within or outside the organization
+  document_origin ENUM('Internal', 'External') NOT NULL,
+  
+  -- Priority Level: Urgency classification for processing
+  -- Determines processing order and resource allocation
+  document_priority ENUM('High', 'Medium', 'Low') NOT NULL,
+  
+  -- Intake Timeline: When document was officially received
+  -- Records the exact date and time of document receipt
+  document_date_received DATE NOT NULL,
+  document_time_received TIME NOT NULL,
+  
+  -- System Timestamps: Records document creation and modification
+  -- Automatically tracks when the record was entered and last updated
+  document_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  document_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  -- Processing Timeline: Tracks document workflow deadlines and completion
+  -- Manages the expected completion date and actual completion date
+  document_due_date DATE NOT NULL,
+  document_completed_timestamp TIMESTAMP NULL,
+  
+  -- Completion Authority: User who marked document as completed
+  -- Links to the account that finalized the document processing
+  document_completed_by_account_uuid VARCHAR(36) NULL,
+  
+  -- Routing Information: Next organizational unit for document processing
+  -- Identifies which division is currently responsible for the document
+  document_assigned_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
+  
+  -- Foreign Key Relationships: Ensures data integrity with users_account table
+  -- RESTRICT prevents deletion of users referenced in document records
+  FOREIGN KEY (document_encoder_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
+  FOREIGN KEY (document_completed_by_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
+  
+  -- Date validation to ensure due date is after received date
+  CONSTRAINT valid_date_range CHECK (document_due_date >= document_date_received),
+  
+  -- Indexing: Improves query performance for common search patterns
+  -- Enables efficient document retrieval by division, priority, and completion status
+  INDEX idx_document_division (document_assigned_division),
+  INDEX idx_document_priority (document_priority),
+  INDEX idx_document_completion (document_completed_timestamp)
+);
+
+
+-- Collaboration Timeline Table
+-- Tracks document workflow actions and comments between users
+CREATE TABLE IF NOT EXISTS collaboration_timeline (
+  -- Primary Key: UUID generated automatically for each timeline entry
+  -- Ensures globally unique identification across systems and databases
+  collaboration_timeline_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  
+  -- Document Reference: Links to the document being collaborated on
+  -- Establishes which document this timeline entry pertains to
+  document_uuid VARCHAR(36) NOT NULL,
+  
+  -- Action Author: User who performed the collaboration action
+  -- Identifies which account is responsible for this timeline entry
+  author_account_uuid VARCHAR(36) NOT NULL,
+  
+  -- Collaboration Action: Type of workflow action performed
+  -- Categorizes the specific action taken in the document's lifecycle
+  collaboration_action_type ENUM('Forwarded', 'Verification', 'Review') NOT NULL,
+
+  -- Division Designation: The organizational unit to which the document is forwarded
+  -- Tracks which division is responsible for the next workflow step
+  designation_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
+  
+  -- Action Remarks: Detailed comments about the collaboration action
+  -- Provides context and explanation for the action taken
+  remarks VARCHAR(1000) NOT NULL,
+  
+  -- System Timestamps: Records entry creation and modification
+  -- Automatically tracks when the record was entered and last updated
+  collaboration_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  collaboration_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  
+  -- Foreign Key Relationships: Ensures data integrity with related tables
+  -- RESTRICT prevents deletion of documents and users referenced in timeline
+  FOREIGN KEY (document_uuid) REFERENCES document_ticket(document_uuid) ON DELETE RESTRICT,
+  FOREIGN KEY (author_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
+  
+  -- Indexing: Improves query performance for common search patterns
+  -- Enables efficient timeline retrieval by document and author
+  INDEX idx_timeline_document (document_uuid),
+  INDEX idx_timeline_author (author_account_uuid)
+);
