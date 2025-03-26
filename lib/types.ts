@@ -1,6 +1,3 @@
-// Priority levels for tasks
-export type Priority = "high" | "medium" | "low"
-
 // View mode options for task display
 export type ViewMode = "list" | "grid"
 
@@ -9,6 +6,9 @@ export type TaskSortOption = "date" | "priority" | "title" | "status"
 
 // Sort direction options
 export type SortDirection = "asc" | "desc"
+
+// Priority levels for tasks
+export type Priority = "high" | "medium" | "low"
 
 // Task completion status types
 export type CompletionStatus = "active" | "overdue" | "completed on time" | "completed late" 
@@ -35,4 +35,3 @@ export interface SortState {
   sortBy: TaskSortOption
   sortDirection: SortDirection
 }
-

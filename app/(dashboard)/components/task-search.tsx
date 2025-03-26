@@ -18,7 +18,7 @@ export function TaskSearch({ searchQuery, onSearchChange }: TaskSearchProps) {
     <div className="relative flex-grow max-w-md">
       <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
       <Input
-        placeholder="Search task titles..."
+        placeholder="Search Document titles..."
         value={searchQuery}
         onChange={(e) => onSearchChange(e.target.value)}
         className="pl-9 h-9"
