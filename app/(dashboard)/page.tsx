@@ -18,11 +18,12 @@ import { TaskSearch } from "@/app/(dashboard)/components/task-search"
 import { ViewToggle } from "@/app/(dashboard)/components/view-toggle"
 import { EmptyState } from "@/app/(dashboard)/components/empty-state"
 
+import { fetchTask } from "@/server/queries/fetch-task"
+
 // Utility and Type Imports
 import { 
   filterTasks, 
   sortTasks, 
-  generateSampleTasks, 
   formatDateToString 
 } from "@/app/(dashboard)/task-utils"
 import type { 
@@ -56,16 +57,36 @@ export default function TasksView() {
 
   // Load Sample Tasks on Component Mount
   useEffect(() => {
-    // Generate sample tasks and store in state and localStorage
-    const sampleTasks = generateSampleTasks()
-    setTasks(sampleTasks)
-    localStorage.setItem("calendarTasks", JSON.stringify(sampleTasks))
+    const loadTasks = async () => {
+      try {
+        // Await the promise returned by fetchTask
+        const sampleTasks = await fetchTask()
+        
+        // Ensure sampleTasks is an array, even if it's empty
+        const tasksArray = Array.isArray(sampleTasks) ? sampleTasks : []
+        
+        setTasks(tasksArray)
+  
+        console.log(tasksArray)
+  
+        localStorage.setItem("calendarTasks", JSON.stringify(tasksArray))
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error)
+        // Explicitly set an empty array
+        setTasks([])
+      }
+    }
+  
+    loadTasks()
   }, [])
 
   // Memoized Task Filtering and Sorting
   // This recalculates only when dependencies change
   const filteredAndSortedTasks = useMemo(() => {
-    const filteredTasks = filterTasks(tasks, searchQuery, priorityFilter, statusFilter)
+    // Ensure tasks is an array before filtering
+    const safeTasksArray = Array.isArray(tasks) ? tasks : []
+    
+    const filteredTasks = filterTasks(safeTasksArray, searchQuery, priorityFilter, statusFilter)
     return sortTasks(filteredTasks, sortBy, sortDirection)
   }, [tasks, searchQuery, priorityFilter, statusFilter, sortBy, sortDirection])
 

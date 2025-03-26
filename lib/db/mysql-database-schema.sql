@@ -161,6 +161,9 @@ CREATE TABLE IF NOT EXISTS task_ticket (
   task_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   task_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 
+  -- Completion Status: Indicates if task is completed
+  task_is_completed BOOLEAN NOT NULL DEFAULT FALSE,
+
   -- Task Timeline: Tracks task workflow deadlines and completion
   task_due_date DATE NOT NULL,
   task_completed_timestamp TIMESTAMP NULL,
@@ -218,30 +221,14 @@ CREATE TABLE IF NOT EXISTS task_collaboration_timeline (
 );
 
 
-INSERT INTO task_ticket (
-    task_uuid, 
-    task_title, 
-    task_creator_account_uuid, 
-    task_type, 
-    task_origin, 
-    task_priority, 
-    task_date_created, 
-    task_time_created, 
-    task_due_date, 
-    task_assigned_division
-) VALUES 
-    (UUID(), 'Labor Dispute Resolution Report', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'Internal', 'High', '2024-03-15', '09:30:00', '2024-04-15', 'ARU-MAU'),
-    (UUID(), 'Annual Workplace Safety Audit', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'Internal', 'Medium', '2024-03-16', '10:45:00', '2024-04-16', 'PPDD'),
-    (UUID(), 'Union Membership Application Batch', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'External', 'Low', '2024-03-17', '14:20:00', '2024-04-17', 'URWED');
-
-
 SELECT DISTINCT 
     tt.task_uuid AS id, 
     tt.task_title AS title, 
-    tt.task_description AS description,
-    tt.task_due_date AS date,
-    tt.task_completed_timestamp AS dateCompleted,
-    tt.task_priority AS priority
+    tt.task_description AS description, 
+    tt.task_due_date AS dueDate, 
+    CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
+    CASE WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' ELSE tt.task_completed_timestamp END AS dateCompleted, 
+    LOWER(tt.task_priority) AS priority 
 FROM task_ticket tt 
 INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
 WHERE ct.designation_division = 'ARU-MAU';
