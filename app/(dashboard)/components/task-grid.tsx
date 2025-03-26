@@ -95,8 +95,8 @@ export function TaskGrid({ tasks, onTaskClick }: TaskGridProps) {
               {/* Formatted task date */}
               <span>
                 {task.completed
-                  ? `Completed on ${format(parseDate(task.dateCompleted || task.date), "MMM d, yyyy")}`
-                  : `Due on ${format(parseDate(task.date), "MMM d, yyyy")}`}
+                  ? `Completed on ${format(parseDate(task.dateCompleted || task.dueDate), "MMM d, yyyy")}`
+                  : `Due on ${format(parseDate(task.dueDate), "MMM d, yyyy")}`}
               </span>
               {/* Badge indicating task completion status */}
               <CompletionStatusBadge task={task} />

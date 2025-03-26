@@ -60,8 +60,8 @@ export function TaskList({ tasks, onTaskClick }: TaskListProps) {
             <div className="text-xs text-muted-foreground flex justify-between items-center">
               <span>
                 {task.completed
-                  ? `Completed on ${format(parseDate(task.dateCompleted || task.date), "MMMM d, yyyy")}`
-                  : `Due on ${format(parseDate(task.date), "MMMM d, yyyy")}`}
+                  ? `Completed on ${format(parseDate(task.dateCompleted || task.dueDate), "MMMM d, yyyy")}`
+                  : `Due on ${format(parseDate(task.dueDate), "MMMM d, yyyy")}`}
               </span>
             </div>
           </div>

@@ -12,12 +12,12 @@ const parseDate = (dateString: string): Date => {
 export const getCompletionStatus = (task: Task): CompletionStatus => {
   if (!task.dateCompleted) {
     // If task is not completed and due date is in the past, it's overdue
-    return isPast(parseDate(task.date)) && !isToday(parseDate(task.date)) ? "overdue" : "active"
+    return isPast(parseDate(task.dueDate)) && !isToday(parseDate(task.dueDate)) ? "overdue" : "active"
   }
 
   // If task is completed, check if it was completed before or after the due date
   if (task.dateCompleted) {
-    const dueDate = parseDate(task.date)
+    const dueDate = parseDate(task.dueDate)
     const completedDate = parseDate(task.dateCompleted)
 
     // If completed on or before due date, it's on time

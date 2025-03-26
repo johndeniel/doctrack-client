@@ -17,7 +17,7 @@ export interface Task {
   id: string
   title: string
   description?: string
-  date: string // Format: dd-MM-yyyy
+  dueDate: string // Format: dd-MM-yyyy
   completed: boolean
   dateCompleted?: string // Format: dd-MM-yyyy
   priority: Priority

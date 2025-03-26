@@ -130,111 +130,118 @@ CREATE TABLE IF NOT EXISTS user_authentication_sessions (
   INDEX idx_user_id (authenticated_user_id)
 );
 
+-- Task Tracking Ticket Table
+CREATE TABLE IF NOT EXISTS task_ticket (
+  -- Primary Key: UUID generated automatically for each new task
+  task_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
 
--- Document Tracking Ticket Table
-CREATE TABLE IF NOT EXISTS document_ticket (
-  -- Primary Key: UUID generated automatically for each new document
-  -- Ensures globally unique identification across systems and databases
-  document_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  -- Task Title: The formal name or subject of the task
+  task_title VARCHAR(1000) NOT NULL,
   
-  -- Document Title: The formal name or subject of the document
-  -- Provides a descriptive identifier for the document in the system
-  document_title VARCHAR(1000) NOT NULL,
-  
-  -- Encoder Reference: User who created the document record
-  -- Links to the account that initially entered the document into the system
-  document_encoder_account_uuid VARCHAR(36) NOT NULL,
-  
-  -- Document Classification: Type of document being tracked
-  -- Differentiates between physical documents and electronic correspondence
-  document_type ENUM('Physical Document', 'Digital Document') NOT NULL,
-  
-  -- Document Source: Origin classification of the document
-  -- Identifies whether document originated from within or outside the organization
-  document_origin ENUM('Internal', 'External') NOT NULL,
-  
+  -- Task Description: Additional details or context about the task
+  task_description TEXT NOT NULL,
+
+  -- Task Creator Reference: User who created the task record
+  task_creator_account_uuid VARCHAR(36) NOT NULL,
+
+  -- Task Classification: Type of task being tracked
+  task_type ENUM('Physical Document', 'Digital Document') NOT NULL,
+
+  -- Task Source: Origin classification of the task
+  task_origin ENUM('Internal', 'External') NOT NULL,
+
   -- Priority Level: Urgency classification for processing
-  -- Determines processing order and resource allocation
-  document_priority ENUM('High', 'Medium', 'Low') NOT NULL,
-  
-  -- Intake Timeline: When document was officially received
-  -- Records the exact date and time of document receipt
-  document_date_received DATE NOT NULL,
-  document_time_received TIME NOT NULL,
-  
-  -- System Timestamps: Records document creation and modification
-  -- Automatically tracks when the record was entered and last updated
-  document_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  document_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  
-  -- Processing Timeline: Tracks document workflow deadlines and completion
-  -- Manages the expected completion date and actual completion date
-  document_due_date DATE NOT NULL,
-  document_completed_timestamp TIMESTAMP NULL,
-  
-  -- Completion Authority: User who marked document as completed
-  -- Links to the account that finalized the document processing
-  document_completed_by_account_uuid VARCHAR(36) NULL,
-  
-  -- Routing Information: Next organizational unit for document processing
-  -- Identifies which division is currently responsible for the document
-  document_assigned_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
-  
+  task_priority ENUM('High', 'Medium', 'Low') NOT NULL,
+
+  -- Intake Timeline: When task was officially created
+  task_date_created DATE NOT NULL,
+  task_time_created TIME NOT NULL,
+
+  -- System Timestamps: Records task creation and modification
+  task_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  task_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
+  -- Task Timeline: Tracks task workflow deadlines and completion
+  task_due_date DATE NOT NULL,
+  task_completed_timestamp TIMESTAMP NULL,
+
+  -- Completion Authority: User who marked task as completed
+  task_completed_by_account_uuid VARCHAR(36) NULL,
+
+  -- Routing Information: Next organizational unit for task processing
+  task_assigned_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
+
   -- Foreign Key Relationships: Ensures data integrity with users_account table
-  -- RESTRICT prevents deletion of users referenced in document records
-  FOREIGN KEY (document_encoder_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
-  FOREIGN KEY (document_completed_by_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
-  
-  -- Date validation to ensure due date is after received date
-  CONSTRAINT valid_date_range CHECK (document_due_date >= document_date_received),
-  
-  -- Indexing: Improves query performance for common search patterns
-  -- Enables efficient document retrieval by division, priority, and completion status
-  INDEX idx_document_division (document_assigned_division),
-  INDEX idx_document_priority (document_priority),
-  INDEX idx_document_completion (document_completed_timestamp)
+  FOREIGN KEY (task_creator_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
+  FOREIGN KEY (task_completed_by_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
+
+  -- Date validation to ensure due date is after created date
+  CONSTRAINT valid_date_range CHECK (task_due_date >= task_date_created),
+
+  -- Indexing for performance
+  INDEX idx_task_division (task_assigned_division),
+  INDEX idx_task_priority (task_priority),
+  INDEX idx_task_completion (task_completed_timestamp)
 );
 
-
--- Collaboration Timeline Table
--- Tracks document workflow actions and comments between users
-CREATE TABLE IF NOT EXISTS collaboration_timeline (
+-- Task Collaboration Timeline Table
+CREATE TABLE IF NOT EXISTS task_collaboration_timeline (
   -- Primary Key: UUID generated automatically for each timeline entry
-  -- Ensures globally unique identification across systems and databases
-  collaboration_timeline_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
+  task_collaboration_timeline_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
   
-  -- Document Reference: Links to the document being collaborated on
-  -- Establishes which document this timeline entry pertains to
-  document_uuid VARCHAR(36) NOT NULL,
+  -- Task Reference: Links to the task being collaborated on
+  task_uuid VARCHAR(36) NOT NULL,
   
   -- Action Author: User who performed the collaboration action
-  -- Identifies which account is responsible for this timeline entry
   author_account_uuid VARCHAR(36) NOT NULL,
   
   -- Collaboration Action: Type of workflow action performed
-  -- Categorizes the specific action taken in the document's lifecycle
   collaboration_action_type ENUM('Forwarded', 'Verification', 'Review') NOT NULL,
 
-  -- Division Designation: The organizational unit to which the document is forwarded
-  -- Tracks which division is responsible for the next workflow step
+  -- Division Designation: The organizational unit to which the task is forwarded
   designation_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
   
   -- Action Remarks: Detailed comments about the collaboration action
-  -- Provides context and explanation for the action taken
   remarks VARCHAR(1000) NOT NULL,
   
   -- System Timestamps: Records entry creation and modification
-  -- Automatically tracks when the record was entered and last updated
   collaboration_created_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   collaboration_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   -- Foreign Key Relationships: Ensures data integrity with related tables
-  -- RESTRICT prevents deletion of documents and users referenced in timeline
-  FOREIGN KEY (document_uuid) REFERENCES document_ticket(document_uuid) ON DELETE RESTRICT,
+  FOREIGN KEY (task_uuid) REFERENCES task_ticket(task_uuid) ON DELETE RESTRICT,
   FOREIGN KEY (author_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
   
-  -- Indexing: Improves query performance for common search patterns
-  -- Enables efficient timeline retrieval by document and author
-  INDEX idx_timeline_document (document_uuid),
+  -- Indexing for performance
+  INDEX idx_timeline_task (task_uuid),
   INDEX idx_timeline_author (author_account_uuid)
 );
+
+
+INSERT INTO task_ticket (
+    task_uuid, 
+    task_title, 
+    task_creator_account_uuid, 
+    task_type, 
+    task_origin, 
+    task_priority, 
+    task_date_created, 
+    task_time_created, 
+    task_due_date, 
+    task_assigned_division
+) VALUES 
+    (UUID(), 'Labor Dispute Resolution Report', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'Internal', 'High', '2024-03-15', '09:30:00', '2024-04-15', 'ARU-MAU'),
+    (UUID(), 'Annual Workplace Safety Audit', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'Internal', 'Medium', '2024-03-16', '10:45:00', '2024-04-16', 'PPDD'),
+    (UUID(), 'Union Membership Application Batch', 'd5e1d4ea-03a8-11f0-971d-e454e87d6a94', 'Physical Document', 'External', 'Low', '2024-03-17', '14:20:00', '2024-04-17', 'URWED');
+
+
+SELECT DISTINCT 
+    tt.task_uuid AS id, 
+    tt.task_title AS title, 
+    tt.task_description AS description,
+    tt.task_due_date AS date,
+    tt.task_completed_timestamp AS dateCompleted,
+    tt.task_priority AS priority
+FROM task_ticket tt 
+INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
+WHERE ct.designation_division = 'ARU-MAU';
