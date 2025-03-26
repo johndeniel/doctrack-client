@@ -58,8 +58,6 @@ export async function GET() {
         // Execute the query
         const tasks = await Query(tasksQuery);
 
-        console.log(tasks)
-
         // Return the tasks
         return NextResponse.json(
             { 

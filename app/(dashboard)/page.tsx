@@ -44,7 +44,7 @@ export default function TasksView() {
 
   // State Management: Tasks data and view mode
   const [tasks, setTasks] = useState<Task[]>([])
-  const [viewMode, setViewMode] = useState<ViewMode>("grid")
+  const [viewMode, setViewMode] = useState<ViewMode>("list")
 
   // Filter State: Search query, priority and status filters
   const [searchQuery, setSearchQuery] = useState("")
