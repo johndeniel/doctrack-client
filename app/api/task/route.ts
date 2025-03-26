@@ -42,9 +42,12 @@ export async function GET() {
                     tt.task_uuid AS id, 
                     tt.task_title AS title, 
                     tt.task_description AS description, 
-                    tt.task_due_date AS dueDate, 
+                    DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
                     CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
-                    CASE WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' ELSE tt.task_completed_timestamp END AS dateCompleted, 
+                    CASE 
+                        WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
+                        ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
+                    END AS dateCompleted,
                     tt.task_priority AS priority 
                 FROM task_ticket tt 
                 INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
@@ -55,12 +58,14 @@ export async function GET() {
         // Execute the query
         const tasks = await Query(tasksQuery);
 
+        console.log(tasks)
+
         // Return the tasks
         return NextResponse.json(
             { 
-                code: 'TASKS_RETRIEVED_SUCCESS', 
-                message: 'Tasks retrieved successfully', 
-                tasks: tasks 
+                code: 'SUCCESS',
+                message: 'Tasks retrieved successfully',
+                tasks: tasks  // Wrap the tasks in a 'tasks' key
             }, 
             { status: 200 }
         );

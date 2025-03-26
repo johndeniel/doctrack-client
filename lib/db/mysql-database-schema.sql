@@ -232,3 +232,19 @@ SELECT DISTINCT
 FROM task_ticket tt 
 INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
 WHERE ct.designation_division = 'ARU-MAU';
+
+
+SELECT DISTINCT 
+    tt.task_uuid AS id, 
+    tt.task_title AS title, 
+    tt.task_description AS description, 
+    DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
+    CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
+    CASE 
+        WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
+        ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
+    END AS dateCompleted, 
+    LOWER(tt.task_priority) AS priority 
+FROM task_ticket tt 
+INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
+WHERE ct.designation_division = 'ARU-MAU';
