@@ -28,8 +28,7 @@ export async function loginUserAccount(accountDetails: LoginFormValues) {
         `HTTP error! status: ${response.status}, details: ${JSON.stringify(result)}`
       )
     }
-
-    console.log("Authentication successful:", result)
+    
     return result
   } catch (error) {
     console.error("Error during authentication:", error)

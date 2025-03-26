@@ -67,8 +67,6 @@ export default function TasksView() {
         
         setTasks(tasksArray)
   
-        console.log(tasksArray)
-  
         localStorage.setItem("calendarTasks", JSON.stringify(tasksArray))
       } catch (error) {
         console.error("Failed to fetch tasks:", error)

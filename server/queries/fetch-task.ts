@@ -11,9 +11,6 @@ export async function fetchTask(): Promise<Task[]> {
     }
 
     const data = await response.json()
-    
-    // Check the structure of the data
-    console.log('Received data:', data)
 
     // Handle different possible response structures
     let tasksArray: any[] = [];
