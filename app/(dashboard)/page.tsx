@@ -161,8 +161,8 @@ export default function TasksView() {
   )
 
   return (
-    <div className="">
-      <div className="container mx-auto">
+    <div className="container mx-auto py-6 px-4 h-screen flex flex-col">
+      <div className="flex flex-col space-y-4 flex-grow">
         {/* Header with title and actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
