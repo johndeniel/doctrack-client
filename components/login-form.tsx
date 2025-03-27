@@ -165,14 +165,14 @@ export default function LoginForm() {
           name="username"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <FormLabel className="text-sm font-medium ">
                 Username
               </FormLabel>
               <FormControl>
                 <Input 
                   placeholder="Enter your username" 
                   {...field} 
-                  className="h-12 rounded-lg border-gray-300 dark:border-gray-700 px-4 text-gray-900 dark:text-white dark:bg-gray-800"
+                  className="h-12 rounded-lg"
                 />
               </FormControl>
               <FormMessage />
@@ -186,7 +186,7 @@ export default function LoginForm() {
           name="password"
           render={({ field }) => (
             <FormItem>
-              <FormLabel className="text-sm font-medium text-gray-700 dark:text-gray-300">
+              <FormLabel className="text-sm font-medium">
                 Password
               </FormLabel>
               <FormControl>
@@ -195,7 +195,7 @@ export default function LoginForm() {
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     {...field}
-                    className="h-12 w-full rounded-lg border-gray-300 dark:border-gray-700 px-4 text-gray-900 dark:text-white dark:bg-gray-800 pr-12"
+                    className="h-12 w-full rounded-lg"
                   />
                   <Button
                     type="button"
@@ -205,7 +205,7 @@ export default function LoginForm() {
                     onClick={togglePasswordVisibility}
                     tabIndex={-1}
                   >
-                    {showPassword ? <EyeOff className="h-5 w-5 text-gray-500 dark:text-gray-400" /> : <Eye className="h-5 w-5 text-gray-500 dark:text-gray-400" />}
+                    {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                     <span className="sr-only">
                       {showPassword ? "Hide password" : "Show password"}
                     </span>
@@ -214,11 +214,11 @@ export default function LoginForm() {
               </FormControl>
               <FormMessage />
             </FormItem>
-          )}
+          )} 
         />
 
         {/* Submit Button */}
-        <Button type="submit" disabled={isLoading} className="w-full h-12 text-base font-medium rounded-lg">
+        <Button type="submit" variant="outline" disabled={isLoading} className="w-full h-12 text-base font-medium rounded-lg">
           {isLoading ? "Authenticating..." : "Login"}
         </Button>
       </form>

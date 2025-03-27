@@ -61,7 +61,7 @@ export function ProfileForm({ initialUsername }: ProfileFormProps) {
         />
       </div>
       <div className="flex justify-end">
-        <Button type="submit"   variant="outline" size="sm" className="h-8 px-3 text-xs font-medium" disabled={isSubmitting}>
+        <Button type="submit" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium" disabled={isSubmitting}>
           {isSubmitting ? "Saving..." : "Save changes"}
         </Button>
       </div>
