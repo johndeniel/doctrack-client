@@ -1,17 +1,9 @@
 import type { Metadata } from "next";
 import { ClientLayout } from "@/components/client-layout";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter } from "next/font/google"
 import '@/styles/globals.css'
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Doctrack"
@@ -24,7 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
+       <body className={inter.className}>
         <ClientLayout>{children}</ClientLayout>
       </body>
     </html>

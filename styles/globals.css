@@ -143,15 +143,6 @@ body {
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-}
-
 /* Override tooltip styles to ensure white background and professional appearance */
 .tooltip-content {
   background-color: white !important;
@@ -163,17 +154,17 @@ body {
   font-size: 12px !important;
 }
 
-/* Enhanced dialog styling for a more premium look */
+/* Elegant minimalist dialog styling */
 .dialog-content {
-  border-radius: 4px !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.08) !important;
-  border: 1px solid rgba(0, 0, 0, 0.06) !important;
+  border-radius: 8px !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08), 0 2px 5px rgba(0, 0, 0, 0.04) !important;
+  border: none !important;
   overflow: hidden !important;
+  transition: transform 0.2s ease, opacity 0.2s ease !important;
 }
 
 .dark .dialog-content {
-  border: 1px solid rgba(255, 255, 255, 0.03) !important;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0, 0, 0, 0.15) !important;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2), 0 2px 5px rgba(0, 0, 0, 0.1) !important;
 }
 
 /* Custom border-left-3 utility class for stronger left borders */
@@ -184,14 +175,14 @@ body {
 /* Enhance separator appearance */
 .h-px {
   height: 1px !important;
-  background: linear-gradient(to right, rgba(0, 0, 0, 0.05), rgba(0, 0, 0, 0.15), rgba(0, 0, 0, 0.05)) !important;
+  background: linear-gradient(to right, rgba(0, 0, 0, 0.02), rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.02)) !important;
 }
 
 /* Improve badge styling for a more professional and premium look */
 .badge {
-  font-weight: 500 !important;
+  font-weight: 400 !important;
   letter-spacing: 0.02em !important;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+  box-shadow: none !important;
   transition: all 0.2s ease !important;
   text-transform: uppercase !important;
   font-size: 8px !important;
@@ -202,27 +193,12 @@ body {
 
 .badge:hover {
   transform: translateY(-1px) !important;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08) !important;
-}
-
-.dark .badge {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2) !important;
-}
-
-.dark .badge:hover {
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.25) !important;
 }
 
 /* Ensure separators span full width */
 .separator {
   width: 100% !important;
-}
-
-/* Add these enhanced styles for dialog headers */
-.dialog-header {
-  background-color: hsl(var(--dialog-header-bg));
-  border-bottom: 1px solid hsl(var(--border));
-  padding: 16px 20px !important;
+  opacity: 0.3 !important;
 }
 
 /* Enhance calendar day highlighting */
@@ -239,31 +215,60 @@ body {
 
 /* Enhanced scroll area styling */
 .scrollbar {
-  width: 6px !important;
+  width: 3px !important;
   background-color: transparent !important;
 }
 
 .scrollbar-thumb {
-  background-color: rgba(0, 0, 0, 0.1) !important;
-  border-radius: 3px !important;
+  background-color: rgba(0, 0, 0, 0.08) !important;
+  border-radius: 1.5px !important;
 }
 
 .dark .scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.1) !important;
+  background-color: rgba(255, 255, 255, 0.08) !important;
 }
 
 .scrollbar-thumb:hover {
-  background-color: rgba(0, 0, 0, 0.2) !important;
+  background-color: rgba(0, 0, 0, 0.15) !important;
 }
 
 .dark .scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.15) !important;
+  background-color: rgba(255, 255, 255, 0.12) !important;
 }
 
-/* Dialog footer styling */
-.dialog-footer {
-  border-top: 1px solid hsl(var(--border));
-  padding: 14px 20px !important;
-  background-color: hsl(var(--dialog-header-bg));
+/* Improved scroll area container */
+.scroll-area-container {
+  position: relative !important;
+  height: 100% !important;
+  padding-right: 4px !important; /* Prevent content from overlapping with scrollbar */
 }
 
+/* Task card styling for minimalist look */
+.task-card {
+  transition: all 0.2s ease !important;
+  margin-bottom: 2px !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02) !important;
+}
+
+.task-card:hover {
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Task info container */
+.task-info-container {
+  max-width: 600px !important;
+  margin: 0 auto !important;
+}
+
+/* Task description styling */
+.task-description {
+  background-color: hsl(var(--muted)) !important;
+  padding: 12px !important;
+  border-radius: 0 !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+}
+
+.dark .task-description {
+  background-color: hsl(var(--secondary)) !important;
+}

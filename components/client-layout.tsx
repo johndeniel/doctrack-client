@@ -3,7 +3,7 @@
 import { Toaster } from "@/components/ui/sonner";
 import { useRouter } from "next/navigation"
 import { FloatingDock } from "@/components/ui/floating-dock"
-import { IconHome, IconCalendar } from "@tabler/icons-react"
+import { IconHome, IconCalendar, IconSettings } from "@tabler/icons-react"
 import { ThemeProvider } from "@/components/theme-provider"
 
 const links = [
@@ -18,6 +18,12 @@ const links = [
     icon: <IconCalendar className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
     href: "/calendar",
     view: "calendar",
+  },
+  {
+    title: "Settings",
+    icon: <IconSettings className="h-full w-full text-neutral-500 dark:text-neutral-300" />,
+    href: "/settings",
+    view: "settings",
   }
 ]
 
