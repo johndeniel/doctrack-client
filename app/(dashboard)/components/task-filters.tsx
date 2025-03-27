@@ -10,7 +10,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import type { Priority, CompletionStatus, FilterState } from "@/lib/types"
-import { cn } from "@/lib/utils" // Assuming you have a cn utility for conditional classes
+
 import React from "react"
 
 interface TaskFiltersProps {
@@ -49,18 +49,11 @@ export function TaskFilters({
         return filter.charAt(0).toUpperCase() + filter.slice(1)
     }
   }
-
+ 
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button 
-          variant="outline" 
-          size="sm" 
-          className={cn(
-            "h-9 border-neutral-300 transition-colors duration-200",
-            activeFiltersCount > 0 && "border-primary"
-          )}
-        >
+        <Button  variant="outline" size="sm" className="h-9">
           <Filter className="h-4 w-4 mr-2 opacity-70" />
           Filters
           {activeFiltersCount > 0 && (

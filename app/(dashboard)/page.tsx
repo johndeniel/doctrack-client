@@ -16,15 +16,14 @@ import { TaskSort } from "@/app/(dashboard)/components/task-sort"
 import { TaskSearch } from "@/app/(dashboard)/components/task-search"
 import { ViewToggle } from "@/app/(dashboard)/components/view-toggle"
 import { EmptyState } from "@/app/(dashboard)/components/empty-state"
-
-import { fetchTask } from "@/server/queries/fetch-task"
+import { fetchTask } from "@/server/queries/fetch-task" 
 
 // Utility and Type Imports
 import { 
   filterTasks, 
   sortTasks, 
   formatDateToString 
-} from "@/app/(dashboard)/task-utils"
+} from "@/app/(dashboard)/components/task-utils"
 import type { 
   Task, 
   Priority, 
@@ -160,7 +159,7 @@ export default function TasksView() {
   )
 
   return (
-    <div className="container mx-auto py-6 px-4 h-screen flex flex-col">
+    <div className="container mx-auto py-12 px-4 h-screen flex flex-col">
       <div className="flex flex-col space-y-4 flex-grow">
         {/* Header with title and actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">

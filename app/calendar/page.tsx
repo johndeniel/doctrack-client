@@ -32,10 +32,10 @@ import {
   isCurrentOrFuture,
 } from "@/app/calendar/components/calendar-utils"
 import type { Task, Priority } from "@/lib/types"
+import { fetchTask } from "@/server/queries/fetch-task"
 import { Separator } from "@/components/ui/separator"
 
-// Generate dummy tasks for demonstration purposes
-import { generateDummyTasks } from "@/app/calendar/dummy-tasks"
+
 
 
 
@@ -53,14 +53,27 @@ export default function CalendarBoard(): JSX.Element {
   const [isViewTasksOpen, setIsViewTasksOpen] = useState<boolean>(false)
   const [isAddTaskOpen, setIsAddTaskOpen] = useState<boolean>(false)
 
-  // Load dummy data on component mount
+  // Load Sample Tasks on Component Mount
   useEffect(() => {
-    // Simulate fetching data from a database
-    const dummyTasks = generateDummyTasks()
-    setTasks(dummyTasks)
-
-    // Store tasks in localStorage for access from other pages
-    localStorage.setItem("calendarTasks", JSON.stringify(dummyTasks))
+    const loadTasks = async () => {
+      try {
+        // Await the promise returned by fetchTask
+        const sampleTasks = await fetchTask()
+        
+        // Ensure sampleTasks is an array, even if it's empty
+        const tasksArray = Array.isArray(sampleTasks) ? sampleTasks : []
+        
+        setTasks(tasksArray)
+  
+        localStorage.setItem("calendarTasks", JSON.stringify(tasksArray))
+      } catch (error) {
+        console.error("Failed to fetch tasks:", error)
+        // Explicitly set an empty array
+        setTasks([])
+      }
+    }
+  
+    loadTasks()
   }, [])
 
   // Calendar date calculations
