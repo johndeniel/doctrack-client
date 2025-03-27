@@ -9,19 +9,23 @@ import { ProfileForm } from "@/app/settings/components/profile-form"
 import { PasswordForm } from "@/app/settings/components/password-form"
 import { ThemeSelector } from "@/app/settings/components/theme-selector"
 import { SettingsCard } from "@/app/settings/components/settings-card"
+import { logoutUserAccount } from '@/server/action/logout'
+
 
 export default function SettingsPage() {
   const router = useRouter()
 
   const handleLogout = async () => {
     try {
+    
+      await logoutUserAccount();
+
       // Simulate API call
       await new Promise((resolve) => setTimeout(resolve, 500))
       toast.success("Logged out", {
         description: "You have been logged out successfully.",
       })
          
-
       // In a real app, you would clear auth state here
       setTimeout(() => {
         router.push("/login")

@@ -1,7 +1,7 @@
 "use client"
 
 import { Toaster } from "@/components/ui/sonner";
-import { useRouter } from "next/navigation"
+import { useRouter, usePathname } from "next/navigation"
 import { FloatingDock } from "@/components/ui/floating-dock"
 import { IconHome, IconCalendar, IconSettings } from "@tabler/icons-react"
 import { ThemeProvider } from "@/components/theme-provider"
@@ -33,6 +33,7 @@ export function ClientLayout({
   children: React.ReactNode;
 }>) {
   const router = useRouter()
+  const pathname = usePathname()
 
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
@@ -49,15 +50,17 @@ export function ClientLayout({
         </div>
       </main>
 
-      {/* Navigation dock */}
-      <FloatingDock
-        items={links.map((link) => ({
-          ...link,
-          onClick: () => router.push(link.href),
-        }))}
-        desktopClassName="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
-        mobileClassName="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50"
-      />
+      {/* Navigation dock - only show if not on login page */}
+      {pathname !== '/login' && (
+        <FloatingDock
+          items={links.map((link) => ({
+            ...link,
+            onClick: () => router.push(link.href),
+          }))}
+          desktopClassName="fixed bottom-8 left-1/2 transform -translate-x-1/2 z-50"
+          mobileClassName="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-50"
+        />
+      )}
       
       <Toaster
         toastOptions={{

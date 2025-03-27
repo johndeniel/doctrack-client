@@ -216,7 +216,7 @@ export default function CalendarBoard(): JSX.Element {
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
               <div>
                 <h1 className="text-xl font-medium tracking-tight">Calendar</h1>
-                <p className="text-muted-foreground text-xs mt-0.5">View your tasks by date</p>
+                <p className="text-muted-foreground text-xs mt-0.5">View your Documents by date</p>
               </div>
               <div className="flex items-center space-x-2">
                 <Button variant="ghost" size="icon" onClick={handlePreviousMonth} className="h-7 w-7">

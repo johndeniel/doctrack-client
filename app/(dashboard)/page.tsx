@@ -164,7 +164,7 @@ export default function TasksView() {
         {/* Header with title and actions */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-xl font-medium tracking-tight">Tasks</h1>
+            <h1 className="text-xl font-medium tracking-tight">Documents</h1>
           </div>
         </div>
 
@@ -202,7 +202,7 @@ export default function TasksView() {
                 className="h-8"
               >
                 <Plus className="h-4 w-4 mr-2" />
-                Add Task
+                Add Document
               </Button>
               {/* View Mode Toggle */}
               <ViewToggle
