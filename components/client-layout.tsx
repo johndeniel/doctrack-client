@@ -38,14 +38,14 @@ export function ClientLayout({
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       <main className="flex-grow overflow-auto bg-white dark:bg-black">
         <div className="h-full w-full max-w-7xl mx-auto px-4 md:px-8">
-          <ThemeProvider 
-            attribute="class" 
-            defaultTheme="system" 
-            enableSystem 
-            disableTransitionOnChange
-          >
-            {children}
-          </ThemeProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+        </ThemeProvider>
         </div>
       </main>
 

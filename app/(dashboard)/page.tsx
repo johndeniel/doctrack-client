@@ -7,7 +7,6 @@ import { Plus, X } from "lucide-react"
 // UI Component Imports
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
 
 // Task-specific Component Imports
 import { TaskList } from "@/app/(dashboard)/components/task-list"
@@ -304,11 +303,6 @@ export default function TasksView() {
             />
           )}
         </ScrollArea>
-
-        {/* Theme Toggle Button */}
-        <div className="flex justify-end mt-">
-          <ThemeToggle />
-        </div>
       </div>
     </div>
   )

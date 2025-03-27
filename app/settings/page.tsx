@@ -39,7 +39,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="container max-w-xl py-10">
+    <div className="container overflow-y-auto pb-24 max-w-xl py-10">
       <div className="mb-8">
         <h1 className="text-xl font-medium">Settings</h1>
         <p className="mt-1 text-sm text-muted-foreground">Manage your account settings and preferences</p>

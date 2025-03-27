@@ -21,7 +21,6 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PriorityBadge } from "@/app/calendar/components/priority-badge"
 import { CompletionStatusBadge } from "@/app/calendar/components/completion-status-badge"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { TaskDialog } from "@/app/calendar/components/task-dialog"
 import { AddTaskDialog } from "@/app/calendar/components/add-task-dialog"
 import { TasksContext } from "@/lib/context"
@@ -398,9 +397,6 @@ export default function CalendarBoard(): JSX.Element {
                   </div>
                   <span>Today</span>
                 </div>
-              </div>
-              <div className="flex items-center">
-                <ThemeToggle />
               </div>
             </div>
           </div>

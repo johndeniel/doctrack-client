@@ -111,8 +111,8 @@ export function PasswordForm() {
           required
         />
       </div>
-      <div>
-        <Button type="submit" className="h-9 px-4" disabled={isSubmitting}>
+       <div className="flex justify-end">
+        <Button type="submit" variant="outline" size="sm" className="h-8 px-3 text-xs font-medium" disabled={isSubmitting}>
           {isSubmitting ? "Updating..." : "Update password"}
         </Button>
       </div>
