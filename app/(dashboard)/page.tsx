@@ -196,7 +196,7 @@ export default function TasksView() {
             <div className="flex items-center gap-2">
               {/* Add Task Button */}
               <Button
-                variant="default"
+                variant="outline"
                 size="sm"
                 onClick={handleAddTask}
                 className="h-8"

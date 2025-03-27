@@ -16,19 +16,19 @@ interface ViewToggleProps {
  */
 export function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
   return (
-    <div className="flex border rounded-md overflow-hidden">
+    <div className="flex border rounded-md">
       <Button
-        variant={viewMode === "list" ? "default" : "ghost"}
+        variant={viewMode === "list" ? "default" : "outline"}
         size="sm"
-        className={cn("h-8 w-8 p-0 rounded-none", viewMode === "list" ? "" : "border-r")}
+        className={cn("h-8 w-8 p-0", viewMode === "list" ? "" : "")}
         onClick={() => onViewModeChange("list")}
       >
         <List className="h-4 w-4" />
       </Button>
       <Button
-        variant={viewMode === "grid" ? "default" : "ghost"}
+        variant={viewMode === "grid" ? "default" : "outline"}
         size="sm"
-        className={cn("h-8 w-8 p-0 rounded-none", viewMode === "grid" ? "" : "")}
+        className={cn("h-8 w-8 p-0", viewMode === "grid" ? "" : "")}
         onClick={() => onViewModeChange("grid")}
       >
         <Grid className="h-4 w-4" />
