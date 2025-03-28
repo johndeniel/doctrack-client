@@ -4,8 +4,8 @@ import type React from "react"
 import { format, parse } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
-import { PriorityBadge } from "@/app/(dashboard)/components/priority-badge"
-import { CompletionStatusBadge } from "@/app/(dashboard)/components/completion-status-badge"
+import { PriorityBadge } from "@/components/priority-badge"
+import { CompletionStatusBadge } from "@/components/completion-status-badge"
 import type { Task } from "@/lib/types"
 
 /**

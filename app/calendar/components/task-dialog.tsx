@@ -14,8 +14,8 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { PriorityBadge } from "@/app/calendar/components/priority-badge";
-import { TaskCompletionStatusBadge } from "@/app/calendar/components/task-completion-status-badge";
+import { PriorityBadge } from "@/components/priority-badge";
+import { CompletionStatusBadge } from "@/components/completion-status-badge";
 import type { Task } from "@/lib/types";
 
 /**
@@ -105,7 +105,8 @@ export const TaskDialog = ({
                 <div className="px-6 py-2 space-y-3">
                   {selectedDate &&
                     currentDateTasks.map((task) => {
-                      const isCompleted = task.completed;
+                      // Determine if the task is completed by checking if dateCompleted is not undefined
+                      const isCompleted = task.dateCompleted !== undefined;
 
                       return (
                         <Card
@@ -171,7 +172,7 @@ export const TaskDialog = ({
                                 )}
                               </div>
                               {/* Displays the task completion status badge */}
-                              <TaskCompletionStatusBadge task={task} />
+                              <CompletionStatusBadge task={task} />
                             </div>
                           </CardContent>
                         </Card>
