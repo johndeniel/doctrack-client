@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { PriorityBadge } from "@/components/priority-badge"
-import { CompletionStatusBadge } from "@/components/completion-status-badge";
+import { StatusBadge } from "@/components/status-badge";
 import { TaskDialog } from "@/app/calendar/components/task-dialog"
 import { AddTaskDialog } from "@/app/calendar/components/add-task-dialog"
 import { TasksContext } from "@/lib/context"
@@ -372,7 +372,7 @@ export default function CalendarBoard(): JSX.Element {
                                           </p>
                                         )}
 
-                                        <CompletionStatusBadge task={task} />
+                                        <StatusBadge task={task} />
                                       </div>
                                     </div>
                                   </TooltipContent>

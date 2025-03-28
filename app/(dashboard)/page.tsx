@@ -23,7 +23,7 @@ import {
   filterTasks, 
   sortTasks, 
   formatDateToString 
-} from "@/app/(dashboard)/components/task-utils"
+} from "@/lib/task-utils"
 import type { 
   Task, 
   Priority, 

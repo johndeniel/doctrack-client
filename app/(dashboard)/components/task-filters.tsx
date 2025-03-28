@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { X, Filter } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -11,8 +12,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import type { Priority, CompletionStatus, FilterState } from "@/lib/types"
 
-import React from "react"
-
 interface TaskFiltersProps {
   filterState: FilterState
   onTogglePriorityFilter: (priority: Priority) => void
@@ -20,7 +19,7 @@ interface TaskFiltersProps {
   onClearFilters: () => void
 }
 
-// Predefined filter options with type safety
+// Define filter options for priority and status
 const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"]
 const STATUS_OPTIONS: CompletionStatus[] = ["active", "overdue", "completed on time", "completed late"]
 
@@ -32,13 +31,13 @@ export function TaskFilters({
 }: TaskFiltersProps) {
   const { priorityFilter, statusFilter, searchQuery } = filterState
 
-  // Memoize active filters count to prevent unnecessary re-renders
-  const activeFiltersCount = React.useMemo(() => 
-    priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0), 
+  // Calculate the number of active filters to display
+  const activeFiltersCount = React.useMemo(
+    () => priorityFilter.length + statusFilter.length + (searchQuery ? 1 : 0),
     [priorityFilter, statusFilter, searchQuery]
   )
 
-  // Helper function to format filter label
+  // Format filter labels for display
   const formatFilterLabel = (filter: string) => {
     switch (filter) {
       case "completed on time":
@@ -49,15 +48,17 @@ export function TaskFilters({
         return filter.charAt(0).toUpperCase() + filter.slice(1)
     }
   }
- 
+
   return (
     <DropdownMenu>
+      {/* Filter Button */}
       <DropdownMenuTrigger asChild>
-        <Button  variant="outline" size="sm" className="h-9">
+        <Button variant="outline" size="sm" className="h-9">
           <Filter className="h-4 w-4 mr-2 opacity-70" />
           Filters
+          {/* Display active filter count if filters are applied */}
           {activeFiltersCount > 0 && (
-            <span 
+            <span
               className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
               aria-label={`${activeFiltersCount} active filters`}
             >
@@ -66,8 +67,10 @@ export function TaskFilters({
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent 
-        align="end" 
+
+      {/* Dropdown Menu Content */}
+      <DropdownMenuContent
+        align="end"
         className="w-56 bg-white dark:bg-neutral-900 border-neutral-200 dark:border-neutral-700"
       >
         <div className="p-2">
@@ -103,12 +106,13 @@ export function TaskFilters({
             </DropdownMenuCheckboxItem>
           ))}
 
+          {/* Clear Filters Button (Visible only if filters are active) */}
           {activeFiltersCount > 0 && (
             <>
               <DropdownMenuSeparator className="my-2 bg-neutral-200 dark:bg-neutral-700" />
-              <Button 
-                variant="ghost" 
-                size="sm" 
+              <Button
+                variant="ghost"
+                size="sm"
                 onClick={onClearFilters}
                 className="w-full justify-start text-xs h-8 rounded-md"
                 aria-label="Clear all filters"

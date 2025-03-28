@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils"
-import type { Task, CompletionStatus } from "@/lib/types"
-import { isPast, isToday, isBefore, isSameDay, parse } from "date-fns"
+import type { Priority, Task, CompletionStatus } from "@/lib/types"
 import { CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { isPast, isToday, isBefore, isSameDay, parse } from "date-fns"
 
 // Function to parse date string from MySQL format to JavaScript Date
 const parseDate = (dateString: string): Date => {
@@ -10,7 +10,7 @@ const parseDate = (dateString: string): Date => {
 
 // Function to get the completion status of a task
 export const getCompletionStatus = (task: Task): CompletionStatus => {
-  if (!task.dateCompleted) {
+  if (!task.completed) {
     // If task is not completed and due date is in the past, it's overdue
     return isPast(parseDate(task.dueDate)) && !isToday(parseDate(task.dueDate)) ? "overdue" : "active"
   }
@@ -21,14 +21,44 @@ export const getCompletionStatus = (task: Task): CompletionStatus => {
     const completedDate = parseDate(task.dateCompleted)
 
     // If completed on or before due date, it's on time
-    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate) ? "completed on time" : "completed late"
+    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate)
+      ? "completed on time"
+      : "completed late"
   }
 
   // Default to on time if dateCompleted is missing but task is marked as completed
   return "completed on time"
 }
 
-// Update the CompletionStatusBadge component to use the new premium styling
+// Update the PriorityBadge component to use the new premium styling
+export const PriorityBadge = ({ priority }: { priority: Priority }) => {
+  const priorityConfig = {
+    high: {
+      label: "High",
+      className:
+        "text-[hsl(var(--priority-high-text))] bg-[hsl(var(--priority-high-bg))] border-[hsl(var(--priority-high-border))]",
+    },
+    medium: {
+      label: "Medium",
+      className:
+        "text-[hsl(var(--priority-medium-text))] bg-[hsl(var(--priority-medium-bg))] border-[hsl(var(--priority-medium-border))]",
+    },
+    low: {
+      label: "Low",
+      className:
+        "text-[hsl(var(--priority-low-text))] bg-[hsl(var(--priority-low-bg))] border-[hsl(var(--priority-low-border))]",
+    },
+  }
+
+  const { label, className } = priorityConfig[priority]
+
+  return (
+    <div className={cn("border whitespace-nowrap badge", className)}>
+      <span className="inline-block">{label}</span>
+    </div>
+  )
+}
+
 export const CompletionStatusBadge = ({ task }: { task: Task }) => {
   const status = getCompletionStatus(task)
 
@@ -36,25 +66,25 @@ export const CompletionStatusBadge = ({ task }: { task: Task }) => {
     "completed on time": {
       label: "Completed On Time",
       className:
-        "text-[hsl(var(--status-completed-text))] bg-[hsl(var(--status-completed-bg))] border-[hsl(var(--status-completed-border))]",
+        "bg-[hsl(var(--status-completed-bg))] text-[hsl(var(--status-completed-text))] border-[hsl(var(--status-completed-border))]",
       icon: <CheckCircle className="h-2.5 w-2.5 mr-1" />,
     },
     "completed late": {
       label: "Completed Late",
       className:
-        "text-[hsl(var(--status-late-text))] bg-[hsl(var(--status-late-bg))] border-[hsl(var(--status-late-border))]",
+        "bg-[hsl(var(--status-late-bg))] text-[hsl(var(--status-late-text))] border-[hsl(var(--status-late-border))]",
       icon: <Clock className="h-2.5 w-2.5 mr-1" />,
     },
     active: {
       label: "Active",
       className:
-        "text-[hsl(var(--status-active-text))] bg-[hsl(var(--status-active-bg))] border-[hsl(var(--status-active-border))]",
+        "bg-[hsl(var(--status-active-bg))] text-[hsl(var(--status-active-text))] border-[hsl(var(--status-active-border))]",
       icon: null,
     },
     overdue: {
       label: "Overdue",
       className:
-        "text-[hsl(var(--status-overdue-text))] bg-[hsl(var(--status-overdue-bg))] border-[hsl(var(--status-overdue-border))]",
+        "bg-[hsl(var(--status-overdue-bg))] text-[hsl(var(--status-overdue-text))] border-[hsl(var(--status-overdue-border))]",
       icon: <AlertCircle className="h-2.5 w-2.5 mr-1" />,
     },
   }
@@ -68,3 +98,4 @@ export const CompletionStatusBadge = ({ task }: { task: Task }) => {
     </span>
   )
 }
+

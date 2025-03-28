@@ -5,11 +5,11 @@ import { format, parse } from "date-fns"
 import { cn } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { PriorityBadge } from "@/components/priority-badge"
-import { CompletionStatusBadge } from "@/components/completion-status-badge"
+import { StatusBadge } from "@/components/status-badge"
 import type { Task } from "@/lib/types"
 
 /**
- * Props for TaskGrid component
+ * Props for TaskGrid component.
  */
 interface TaskGridProps {
   tasks: Task[]
@@ -18,7 +18,8 @@ interface TaskGridProps {
 }
 
 /**
- * Parses a date string from dd-MM-yyyy format to a JavaScript Date object.
+ * Parses a date string in "dd-MM-yyyy" format to a JavaScript Date object.
+ *
  * @param dateString - The date string in dd-MM-yyyy format.
  * @returns A JavaScript Date object.
  */
@@ -27,29 +28,29 @@ const parseDate = (dateString: string): Date => {
 }
 
 /**
- * TaskGrid component displays tasks in a grid view.
- * It renders each task as a card with proper formatting and interactions.
+ * TaskGrid component displays tasks in a responsive grid layout.
+ * Each task is rendered as a card with its title, description, badges, and formatted dates.
  *
- * @param tasks - List of tasks to display.
- * @param onTaskClick - Function to call when a task card is clicked.
+ * @param tasks - Array of tasks to display.
+ * @param onTaskClick - Callback function when a task card is clicked.
  */
 export function TaskGrid({ tasks, onTaskClick }: TaskGridProps) {
   return (
     // Grid container with responsive columns and gap between cards
     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 p-4">
       {tasks.map((task) => (
-        // Task card container with conditional styling if completed
+        // Task card container with conditional styling based on completion
         <div
           key={task.id}
           className={cn(
             "bg-background border border-border/40 rounded-md overflow-hidden cursor-pointer transition-colors",
-            task.dateCompleted && "bg-muted/5" // Change background if task is completed
+            task.dateCompleted && "bg-muted/5" // Apply muted background if task is completed
           )}
           onClick={() => onTaskClick(task.id)}
         >
-          {/* Inner container for task content with fixed height */}
+          {/* Card content container with fixed height */}
           <div className="p-3.5 flex flex-col h-[170px]">
-            {/* Header: Task title and priority badge */}
+            {/* Header section: Task title and PriorityBadge */}
             <div className="flex justify-between items-start gap-2 mb-2">
               <h3
                 className={cn("text-sm font-medium flex-1 h-10", task.dateCompleted && "text-muted-foreground")}
@@ -67,7 +68,7 @@ export function TaskGrid({ tasks, onTaskClick }: TaskGridProps) {
               <PriorityBadge priority={task.priority} />
             </div>
 
-            {/* Task description, if provided */}
+            {/* Optional description section */}
             {task.description && (
               <p
                 className={cn(
@@ -88,20 +89,19 @@ export function TaskGrid({ tasks, onTaskClick }: TaskGridProps) {
               </p>
             )}
 
-            {/* Footer: Date and completion status */}
+            {/* Footer section: Separator, formatted date, and StatusBadge */}
             <div className="mt-auto pt-2.5">
-            <Separator className="mb-2.5 opacity-60" />
-            <div className="flex justify-between items-center text-[0.7rem] text-muted-foreground">
-              {/* Formatted task date */}
-              <span>
-                {task.completed
-                  ? `Completed on ${format(parseDate(task.dateCompleted || task.dueDate), "MMM d, yyyy")}`
-                  : `Due on ${format(parseDate(task.dueDate), "MMM d, yyyy")}`}
-              </span>
-              {/* Badge indicating task completion status */}
-              <CompletionStatusBadge task={task} />
+              <Separator className="mb-2.5 opacity-60" />
+              <div className="flex justify-between items-center text-[0.7rem] text-muted-foreground">
+                {/* Display completion date if completed; otherwise, show due date */}
+                <span>
+                  {task.completed
+                    ? `Completed on ${format(parseDate(task.dateCompleted || task.dueDate), "MMM d, yyyy")}`
+                    : `Due on ${format(parseDate(task.dueDate), "MMM d, yyyy")}`}
+                </span>
+                <StatusBadge task={task} />
+              </div>
             </div>
-          </div>
           </div>
         </div>
       ))}
