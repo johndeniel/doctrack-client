@@ -23,14 +23,14 @@ import { PriorityBadge } from "@/components/priority-badge"
 import { StatusBadge } from "@/components/status-badge";
 import { TaskDialog } from "@/app/calendar/components/task-dialog"
 import { AddTaskDialog } from "@/app/calendar/components/add-task-dialog"
-import { TasksContext } from "@/lib/context"
+import { TasksContext } from "@/lib/task-context"
 import {
   parseDate,
   formatDateToString,
   getCompletionStatus,
   isTaskOnDay,
   isCurrentOrFuture,
-} from "@/app/calendar/components/calendar-utils"
+} from "@/lib/calendar-utils"
 import type { Task, Priority } from "@/lib/types"
 import { fetchTask } from "@/server/queries/fetch-task"
 import { Separator } from "@/components/ui/separator"
