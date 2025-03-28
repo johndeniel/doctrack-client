@@ -5,19 +5,50 @@ import { LogOut } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { toast } from "sonner"
-import { ProfileForm } from "@/app/settings/components/profile-form"
+import { ProfileInfo } from "@/app/settings/components/profile-info"
 import { PasswordForm } from "@/app/settings/components/password-form"
 import { ThemeSelector } from "@/app/settings/components/theme-selector"
 import { SettingsCard } from "@/app/settings/components/settings-card"
 import { logoutUserAccount } from '@/server/action/logout'
-
+import { fetchProfile } from '@/server/queries/fetch-profile'
+import { useEffect, useState } from "react"
 
 export default function SettingsPage() {
   const router = useRouter()
+  const [profile, setProfile] = useState({
+    avatarUrl: "/placeholder.svg?height=200&width=200",
+    name: "Loading...",
+    username: "loading",
+    division: "Loading"
+  })
+
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const profileData = await fetchProfile()
+        
+        if (profileData && profileData.length > 0) {
+          const firstProfile = profileData[0]
+          setProfile({
+            avatarUrl: firstProfile.avatarUrl || "/placeholder.svg?height=200&width=200",
+            name: firstProfile.name || "Unknown",
+            username: firstProfile.username || "unknown",
+            division: firstProfile.division || "Unassigned"
+          })
+        }
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      } catch (error) {
+        toast.error("Error", {
+          description: "Failed to load profile. Please try again.",
+        })
+      }
+    }
+
+    loadProfile()
+  }, [])
 
   const handleLogout = async () => {
     try {
-    
       await logoutUserAccount();
 
       // Simulate API call
@@ -51,7 +82,12 @@ export default function SettingsPage() {
 
       <div className="space-y-6">
         <SettingsCard title="Profile">
-          <ProfileForm initialUsername="johndoe" />
+          <ProfileInfo
+            avatarUrl={profile.avatarUrl}
+            name={profile.name}
+            username={profile.username}
+            division={profile.division}
+          />
         </SettingsCard>
 
         <SettingsCard title="Password">
@@ -79,4 +115,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-
