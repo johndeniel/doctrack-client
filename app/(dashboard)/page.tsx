@@ -131,21 +131,25 @@ export default function TasksView() {
     router.push("/add-task")
   }, [router])
 
-  // Task Completion Toggle with Immutable Update pattern
+  // Toggle task completion using immutable updates.
+  // Determines if the task is completed by checking if dateCompleted exists.
   const handleToggleTaskCompletion = useCallback((taskId: string, event: React.MouseEvent) => {
-    // Prevent event bubbling
+    // Prevent event propagation to avoid unintended click actions
     event.stopPropagation()
+    
+    const updatedTasks = tasks.map(task => {
+      // Determine if the task is completed based on the existence of dateCompleted
+      const isCompleted = task.dateCompleted !== undefined
 
-    // Map through tasks to toggle the completion state
-    const updatedTasks = tasks.map(task =>
-      task.id === taskId
-        ? {
-            ...task,
-            completed: !task.completed,
-            dateCompleted: !task.completed ? formatDateToString(new Date()) : undefined
-          }
-        : task
-    )
+      // If this is the task to toggle, update its dateCompleted accordingly
+      if (task.id === taskId) {
+        return {
+          ...task,
+          dateCompleted: isCompleted ? undefined : formatDateToString(new Date())
+        }
+      }
+      return task
+    })
 
     // Update state and localStorage with the updated tasks
     setTasks(updatedTasks)

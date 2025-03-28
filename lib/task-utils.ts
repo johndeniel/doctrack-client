@@ -20,31 +20,35 @@ export const formatDateToString = (date: Date): string => {
 }
 
 /**
- * Get the completion status of a task
+ * Get the completion status of a task based on its dates.
+ * Uses the existence of dateCompleted to decide if a task is completed.
+ * 
  * @param task Task object
- * @returns CompletionStatus (onTime, late, active, or overdue)
+ * @returns CompletionStatus (active, overdue, completed on time, or completed late)
  */
 export const getCompletionStatus = (task: Task): CompletionStatus => {
-  if (!task.completed) {
-    // If task is not completed and due date is in the past, it's overdue
-    return isPast(parseDate(task.dueDate)) && !isToday(parseDate(task.dueDate)) ? "overdue" : "active"
+  // Determine if the task is completed by checking if dateCompleted exists
+  const isCompleted = task.dateCompleted !== undefined
+
+  if (!isCompleted) {
+    // If task is not completed and due date is in the past (and not today), it's overdue; otherwise, it's active.
+    return isPast(parseDate(task.dueDate)) && !isToday(parseDate(task.dueDate))
+      ? "overdue"
+      : "active"
   }
 
-  // If task is completed, check if it was completed before or after the due date
-  if (task.dateCompleted) {
-    const dueDate = parseDate(task.dueDate)
-    const completedDate = parseDate(task.dateCompleted)
+  // If task is completed, compare the completion date with the due date.
+  const dueDate = parseDate(task.dueDate)
+  const completedDate = parseDate(task.dateCompleted!)
 
-    // If completed on or before due date, it's on time
-    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate) ? "completed on time" : "completed late"
-  }
-
-  // Default to on time if dateCompleted is missing but task is marked as completed
-  return "completed on time"
+  // If completed on or before due date, it's on time; otherwise, it's completed late.
+  return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate)
+    ? "completed on time"
+    : "completed late"
 }
 
 /**
- * Filter tasks based on search query, priority, and status filters
+ * Filter tasks based on search query, priority, and status filters.
  * @param tasks Array of tasks to filter
  * @param searchQuery Search query string
  * @param priorityFilter Array of priority filters
@@ -73,10 +77,10 @@ export const filterTasks = (
 }
 
 /**
- * Sort tasks based on sort criteria and direction
+ * Sort tasks based on sort criteria and direction.
  * @param tasks Array of tasks to sort
- * @param sortBy Sort criteria
- * @param sortDirection Sort direction
+ * @param sortBy Sort criteria ("date" | "priority" | "title" | "status")
+ * @param sortDirection Sort direction ("asc" | "desc")
  * @returns Sorted array of tasks
  */
 export const sortTasks = (
@@ -103,7 +107,9 @@ export const sortTasks = (
       return sortDirection === "asc" ? statusA - statusB : statusB - statusA
     } else {
       // Sort by title (default)
-      return sortDirection === "asc" ? a.title.localeCompare(b.title) : b.title.localeCompare(a.title)
+      return sortDirection === "asc"
+        ? a.title.localeCompare(b.title)
+        : b.title.localeCompare(a.title)
     }
   })
 }

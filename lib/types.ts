@@ -17,10 +17,10 @@ export interface Task {
   id: string
   title: string
   description?: string
-  dueDate: string // Format: dd-MM-yyyy
-  completed: boolean
-  dateCompleted?: string // Format: dd-MM-yyyy
   priority: Priority
+  dueDate: string // Format: dd-MM-yyyy
+  dateCompleted?: string // Format: dd-MM-yyyy
+  
 }
 
 // Filter state interface

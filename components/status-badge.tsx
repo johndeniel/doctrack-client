@@ -1,36 +1,50 @@
-import { cn } from "@/lib/utils"
-import type { Task, CompletionStatus } from "@/lib/types"
-import { isPast, isToday, isBefore, isSameDay, parse } from "date-fns"
-import { CheckCircle, Clock, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils";
+import type { Task, CompletionStatus } from "@/lib/types";
+import { isPast, isToday, isBefore, isSameDay, parse } from "date-fns";
+import { CheckCircle, Clock, AlertCircle } from "lucide-react";
 
-// Function to parse date string from MySQL format to JavaScript Date
+/**
+ * Parses a date string in "dd-MM-yyyy" format into a JavaScript Date object.
+ * @param dateString - The date string in MySQL format (dd-MM-yyyy).
+ * @returns A Date object.
+ */
 const parseDate = (dateString: string): Date => {
-  return parse(dateString, "dd-MM-yyyy", new Date())
-}
+  return parse(dateString, "dd-MM-yyyy", new Date());
+};
 
-// Function to get the completion status of a task
+/**
+ * Determines the completion status of a task.
+ * Uses the existence of dateCompleted to decide if a task is complete.
+ *
+ * @param task - The task object.
+ * @returns A CompletionStatus value ("active", "overdue", "completed on time", or "completed late").
+ */
 export const getCompletionStatus = (task: Task): CompletionStatus => {
-  if (!task.dateCompleted) {
-    // If task is not completed and due date is in the past, it's overdue
-    return isPast(parseDate(task.dueDate)) && !isToday(parseDate(task.dueDate)) ? "overdue" : "active"
+  // Determine if the task is completed by checking if dateCompleted exists
+  const isCompleted = task.dateCompleted !== undefined;
+
+  // If the task is not completed, check if it's overdue.
+  if (!isCompleted) {
+    const dueDate = parseDate(task.dueDate);
+    return isPast(dueDate) && !isToday(dueDate) ? "overdue" : "active";
   }
 
-  // If task is completed, check if it was completed before or after the due date
-  if (task.dateCompleted) {
-    const dueDate = parseDate(task.dueDate)
-    const completedDate = parseDate(task.dateCompleted)
+  // If the task is completed, compare the completion date with the due date.
+  const dueDate = parseDate(task.dueDate);
+  const completedDate = parseDate(task.dateCompleted!);
 
-    // If completed on or before due date, it's on time
-    return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate) ? "completed on time" : "completed late"
-  }
+  return isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate)
+    ? "completed on time"
+    : "completed late";
+};
 
-  // Default to on time if dateCompleted is missing but task is marked as completed
-  return "completed on time"
-}
-
-// Update the StatusBadge component to use the new premium styling
+/**
+ * StatusBadge component renders a badge showing the task's completion status.
+ *
+ * @param task - The task object.
+ */
 export const StatusBadge = ({ task }: { task: Task }) => {
-  const status = getCompletionStatus(task)
+  const status = getCompletionStatus(task);
 
   const statusConfig = {
     "completed on time": {
@@ -57,14 +71,19 @@ export const StatusBadge = ({ task }: { task: Task }) => {
         "text-[hsl(var(--status-overdue-text))] bg-[hsl(var(--status-overdue-bg))] border-[hsl(var(--status-overdue-border))]",
       icon: <AlertCircle className="h-2.5 w-2.5 mr-1" />,
     },
-  }
+  };
 
-  const { label, className, icon } = statusConfig[status]
+  const { label, className, icon } = statusConfig[status];
 
   return (
-    <span className={cn("border flex items-center whitespace-nowrap badge", "leading-none", className)}>
+    <span
+      className={cn(
+        "border flex items-center whitespace-nowrap badge leading-none",
+        className
+      )}
+    >
       {icon}
       {label}
     </span>
-  )
-}
+  );
+};
