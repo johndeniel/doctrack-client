@@ -3,12 +3,28 @@ import { useTheme } from "next-themes"
 import { Laptop, Moon, Sun } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { useEffect } from "react"
 
 /**
  * Theme selector component with light, dark, and system options
  */
 export function ThemeSelector() {
   const { theme, setTheme } = useTheme()
+
+  // Persist theme in localStorage
+  useEffect(() => {
+    if (theme) {
+      localStorage.setItem('theme', theme)
+    }
+  }, [theme])
+
+  // Check localStorage on component mount
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('theme')
+    if (savedTheme) {
+      setTheme(savedTheme)
+    }
+  }, [setTheme])
 
   return (
     <div className="flex items-center justify-between">
@@ -44,4 +60,3 @@ export function ThemeSelector() {
     </div>
   )
 }
-
