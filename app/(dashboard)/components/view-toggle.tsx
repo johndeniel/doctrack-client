@@ -16,7 +16,7 @@ interface ViewToggleProps {
  */
 export function ViewToggle({ viewMode, onViewModeChange }: ViewToggleProps) {
   return (
-    <div className="flex border rounded-md">
+    <div className="flex rounded-md border-transparent dark:border-white/10">
       <Button
         variant={viewMode === "list" ? "default" : "outline"}
         size="sm"
