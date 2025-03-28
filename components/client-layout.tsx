@@ -62,19 +62,19 @@ export function ClientLayout({
         />
       )}
       
-      <Toaster
-        toastOptions={{
-          classNames: {
+      <Toaster 
+        toastOptions={{ 
+          classNames: { 
             toast: `
               group toast 
-              group-[.toaster]:bg-background 
-              group-[.toaster]:text-foreground 
-              group-[.toaster]:border-border 
-              group-[.toaster]:shadow-lg 
-              group-[.toaster]:pointer-events-auto
-            `,
-          },
-        }}
+              bg-white dark:bg-black 
+              text-black dark:text-white 
+              border border-gray-200 dark:border-gray-800
+              shadow-lg 
+              pointer-events-auto
+            `, 
+          }, 
+        }} 
       />
     </div>
   );

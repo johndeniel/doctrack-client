@@ -70,45 +70,25 @@ export default function LoginForm() {
             if (errorCode === "INVALID_CREDENTIALS") {
               toast.error("Authentication Failed", {
                 description: "The username or password you entered is incorrect.",
-                action: {
-                  label: "Try Again",
-                  onClick: () => form.setFocus("username"),
-                },
               });
             } else if (errorCode === "VALIDATION_ERROR") {
               toast.error("Invalid Input", {
                 description: "Please ensure all required fields are filled correctly.",
-                action: {
-                  label: "Review",
-                  onClick: () => form.setFocus("username"),
-                },
               });
             } else {
               // Handle other API error codes
               toast.error("Login Failed", {
                 description: errorDetails.message || "An unexpected error occurred during login.",
-                action: {
-                  label: "Retry",
-                  onClick: () => form.handleSubmit(onSubmit)(),
-                },
               });
             }
           } else if (statusCode === "500") {
             toast.error("Server Error", {
               description: "An internal server error occurred. Please try again later.",
-              action: {
-                label: "Retry",
-                onClick: () => form.handleSubmit(onSubmit)(),
-              },
             });
           } else {
             // Fallback for when details can't be parsed
             toast.error("Authentication Failed", {
               description: "An error occurred during login.",
-              action: {
-                label: "Retry",
-                onClick: () => form.handleSubmit(onSubmit)(),
-              },
             });
           }
         } catch (parseError) {
@@ -118,26 +98,14 @@ export default function LoginForm() {
           if (errorMessage.includes('status: 401')) {
             toast.error("Authentication Failed", {
               description: "The username or password you entered is incorrect.",
-              action: {
-                label: "Try Again",
-                onClick: () => form.setFocus("username"),
-              },
             });
           } else if (errorMessage.includes('status: 400')) {
             toast.error("Invalid Input", {
               description: "Please ensure all required fields are filled correctly.",
-              action: {
-                label: "Review",
-                onClick: () => form.setFocus("username"),
-              },
             });
           } else {
             toast.error("Login Failed", {
               description: "An unexpected error occurred during login.",
-              action: {
-                label: "Retry",
-                onClick: () => form.handleSubmit(onSubmit)(),
-              },
             });
           }
         }
@@ -145,10 +113,6 @@ export default function LoginForm() {
         // Handle connection errors or other unexpected errors
         toast.error("Connection Error", {
           description: "Unable to connect to the authentication service. Please check your internet connection.",
-          action: {
-            label: "Retry",
-            onClick: () => form.handleSubmit(onSubmit)(),
-          },
         });
       }
     } finally {
