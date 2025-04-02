@@ -1,6 +1,6 @@
 "use client"
 import { format } from "date-fns"
-import { CalendarIcon, Clock } from "lucide-react"
+import { CalendarIcon } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import * as z from "zod"
@@ -48,7 +48,7 @@ interface AddTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAddTask: (task: Omit<Task, "id">) => void
-  selectedDate: Date // Add selectedDate prop
+  selectedDate: Date
 }
 
 /**
@@ -94,7 +94,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
       title: values.title,
       description: values.description,
       priority: values.priority as Priority,
-      dueDate: formatDateToString(selectedDate), // Use the selectedDate from props
+      dueDate: formatDateToString(selectedDate),
       dateCompleted: undefined,
     }
 
@@ -114,26 +114,30 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[520px] overflow-y-auto">
-        <DialogHeader className="px-6 py-4">
-          <DialogTitle className="text-lg font-medium">Add New Task</DialogTitle>
-          <DialogDescription className="text-sm mt-1">
-            Create a new task with all the required details.
+      <DialogContent className="sm:max-w-[560px] p-0 overflow-hidden dialog-content">
+        <DialogHeader className="px-7 py-6 border-b border-border/20 bg-muted/5">
+          <DialogTitle className="text-xl font-medium tracking-tight">Add New Document</DialogTitle>
+          <DialogDescription className="text-sm mt-2 text-muted-foreground font-normal">
+            Create a new Document with all the required details.
           </DialogDescription>
         </DialogHeader>
 
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)}>
-            <div className="px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
+            <div className="px-7 space-y-7 pb-4 max-h-[70vh] overflow-y-auto">
               {/* Title field */}
               <FormField
                 control={form.control}
                 name="title"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem className="space-y-2.5">
                     <FormLabel className="text-sm font-medium">Title</FormLabel>
                     <FormControl>
-                      <Input placeholder="Enter task title" className="h-9" {...field} />
+                      <Input 
+                        placeholder="Enter document title" 
+                        className="h-10 rounded-md bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-offset-0 transition-all" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -145,10 +149,14 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                 control={form.control}
                 name="description"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
+                  <FormItem className="space-y-2.5">
                     <FormLabel className="text-sm font-medium">Description</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Enter task description" className="resize-none min-h-[80px]" {...field} />
+                      <Textarea 
+                        placeholder="Enter document description" 
+                        className="resize-none min-h-[100px] p-4 rounded-md bg-background border-border/60 focus-visible:ring-1 focus-visible:ring-offset-0 transition-all" 
+                        {...field} 
+                      />
                     </FormControl>
                     <FormMessage className="text-xs" />
                   </FormItem>
@@ -156,16 +164,16 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
               />
 
               {/* Type and Origin fields */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="type"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium">Document Type</FormLabel>
+                    <FormItem className="space-y-2.5">
+                      <FormLabel className="text-sm">Document Type</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-9">
+                          <SelectTrigger>
                             <SelectValue placeholder="Select document type" />
                           </SelectTrigger>
                         </FormControl>
@@ -183,11 +191,11 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                   control={form.control}
                   name="origin"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium">Task Origin</FormLabel>
+                    <FormItem className="space-y-2.5">
+                      <FormLabel className="text-sm">Document Origin</FormLabel>
                       <Select onValueChange={field.onChange} defaultValue={field.value}>
                         <FormControl>
-                          <SelectTrigger className="h-9">
+                          <SelectTrigger>
                             <SelectValue placeholder="Select origin" />
                           </SelectTrigger>
                         </FormControl>
@@ -207,24 +215,18 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                 control={form.control}
                 name="priority"
                 render={({ field }) => (
-                  <FormItem className="space-y-2">
-                    <FormLabel className="text-sm font-medium">Priority</FormLabel>
+                  <FormItem className="space-y-2.5">
+                    <FormLabel className="text-sm">Priority</FormLabel>
                     <Select onValueChange={field.onChange} defaultValue={field.value}>
                       <FormControl>
-                        <SelectTrigger className="h-9">
+                        <SelectTrigger>
                           <SelectValue placeholder="Select priority" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="high" className="text-[hsl(var(--priority-high-text))]">
-                          High Priority
-                        </SelectItem>
-                        <SelectItem value="medium" className="text-[hsl(var(--priority-medium-text))]">
-                          Medium Priority
-                        </SelectItem>
-                        <SelectItem value="low" className="text-[hsl(var(--priority-low-text))]">
-                          Low Priority
-                        </SelectItem>
+                        <SelectItem value="high">High Priority</SelectItem>
+                        <SelectItem value="medium">Medium Priority</SelectItem>
+                        <SelectItem value="low">Low Priority</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-xs" />
@@ -233,12 +235,12 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
               />
 
               {/* Date Received and Time Received fields */}
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
                   name="dateReceived"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
+                    <FormItem className="space-y-2.5">
                       <FormLabel className="text-sm font-medium">Date Received</FormLabel>
                       <Popover>
                         <PopoverTrigger asChild>
@@ -246,17 +248,23 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                             <Button
                               variant="outline"
                               className={cn(
-                                "w-full justify-start text-left font-normal h-9",
-                                !field.value && "text-muted-foreground",
+                                "w-full justify-start text-left font-normal h-10 rounded-md bg-background border-border/60 hover:bg-muted/10 transition-all",
+                                !field.value && "text-muted-foreground"
                               )}
                             >
-                              <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                              <CalendarIcon className="mr-3 h-4 w-4 text-muted-foreground" />
                               {field.value ? format(field.value, "MMM d, yyyy") : "Select date"}
                             </Button>
                           </FormControl>
                         </PopoverTrigger>
-                        <PopoverContent className="w-auto p-0" align="start">
-                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        <PopoverContent className="w-auto p-0 bg-background border-border/60 rounded-md shadow-lg" align="start">
+                          <Calendar 
+                            mode="single" 
+                            selected={field.value} 
+                            onSelect={field.onChange} 
+                            initialFocus 
+                            className="rounded-md"
+                          />
                         </PopoverContent>
                       </Popover>
                       <FormMessage className="text-xs" />
@@ -268,12 +276,14 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                   control={form.control}
                   name="timeReceived"
                   render={({ field }) => (
-                    <FormItem className="space-y-2">
-                      <FormLabel className="text-sm font-medium">Time Received</FormLabel>
+                    <FormItem className="space-y-2.5">
+                      <FormLabel className="text-sm">Time Received</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <Input type="time" className="pl-9 h-9" {...field} />
-                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                          <Input 
+                            type="time" 
+                            {...field} 
+                          />
                         </div>
                       </FormControl>
                       <FormMessage className="text-xs" />
@@ -281,16 +291,21 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                   )}
                 />
               </div>
-
-              {/* Remove the Due Date field section */}
             </div>
 
-            <DialogFooter className="px-6 py-4 flex justify-end gap-2">
-              <Button variant="outline" type="button" onClick={handleClose} className="h-9">
+            <DialogFooter className="px-6 py-4 flex justify-between">
+              <Button 
+                variant="ghost"
+                size="sm"
+                onClick={handleClose} 
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="h-9">
-                Add Task
+              <Button 
+                variant="outline"
+                size="sm"
+              >
+                Add Document
               </Button>
             </DialogFooter>
           </form>
@@ -299,4 +314,3 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
     </Dialog>
   )
 }
-
