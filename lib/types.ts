@@ -16,11 +16,10 @@ export type CompletionStatus = "active" | "overdue" | "completed on time" | "com
 export interface Task {
   id: string
   title: string
-  description?: string
+  description: string
   priority: Priority
   dueDate: string // Format: dd-MM-yyyy
   dateCompleted?: string // Format: dd-MM-yyyy
-  
 }
 
 // Filter state interface

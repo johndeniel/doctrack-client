@@ -1,158 +1,300 @@
 "use client"
-
-import { useState } from "react"
 import { format } from "date-fns"
-import { ArrowLeft } from "lucide-react"
+import { CalendarIcon, Clock } from "lucide-react"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
+import { Calendar } from "@/components/ui/calendar"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Label } from "@/components/ui/label"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import type { Priority } from "@/lib/types"
-import type { JSX } from "react/jsx-runtime"
+import { formatDateToString } from "@/lib/task-utils"
+import type { Priority, Task } from "@/lib/types"
 
-/**
- * Props for the AddTaskDialog component
- */
+// Form schema with validation
+const formSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  type: z.enum(["Physical Document", "Digital Document"], {
+    required_error: "Document type is required",
+  }),
+  origin: z.enum(["Internal", "External"], {
+    required_error: "Task origin is required",
+  }),
+  priority: z.enum(["high", "medium", "low"], {
+    required_error: "Priority is required",
+  }),
+  dateReceived: z.date({
+    required_error: "Date received is required",
+  }),
+  timeReceived: z.string().min(1, "Time received is required"),
+})
+
+type FormValues = z.infer<typeof formSchema>
+
 interface AddTaskDialogProps {
-  isOpen: boolean
+  open: boolean
   onOpenChange: (open: boolean) => void
-  selectedDate: Date | null
-  onBackToTasks: () => void
-  onAddTask: (task: { title: string; description: string; priority: Priority }) => void
+  onAddTask: (task: Omit<Task, "id">) => void
+  selectedDate: Date // Add selectedDate prop
 }
 
 /**
- * Dialog component for adding a new task
- * Provides form fields for task title, description, and priority
+ * AddTaskDialog component provides a form for adding new tasks
+ * It includes fields for title, description, type, origin, priority, and dates
  */
-export const AddTaskDialog = ({
-  isOpen,
-  onOpenChange,
-  selectedDate,
-  onBackToTasks,
-  onAddTask,
-}: AddTaskDialogProps): JSX.Element => {
-  // State for the new task form
-  const [newTask, setNewTask] = useState<{
-    title: string
-    description: string
-    priority: Priority
-  }>({
-    title: "",
-    description: "",
-    priority: "medium",
+export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: AddTaskDialogProps) {
+  // Initialize form with default values
+  const form = useForm<FormValues>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      title: "",
+      description: "",
+      type: "Digital Document",
+      origin: "Internal",
+      priority: "medium",
+      dateReceived: new Date(),
+      timeReceived: format(new Date(), "HH:mm"),
+    },
   })
 
   /**
-   * Handles the form submission
-   * Validates the task title and calls the onAddTask callback
+   * Reset form fields to default values
    */
-  const handleAddTask = (): void => {
-    if (newTask.title.trim()) {
-      onAddTask(newTask)
+  const resetForm = () => {
+    form.reset({
+      title: "",
+      description: "",
+      type: "Digital Document",
+      origin: "Internal",
+      priority: "medium",
+      dateReceived: new Date(),
+      timeReceived: format(new Date(), "HH:mm"),
+    })
+  }
 
-      // Reset the form after submission
-      setNewTask({
-        title: "",
-        description: "",
-        priority: "medium",
-      })
+  /**
+   * Handle form submission
+   */
+  const onSubmit = (values: FormValues) => {
+    // Create new task object
+    const newTask: Omit<Task, "id"> = {
+      title: values.title,
+      description: values.description,
+      priority: values.priority as Priority,
+      dueDate: formatDateToString(selectedDate), // Use the selectedDate from props
+      dateCompleted: undefined,
     }
+
+    // Add task and close dialog
+    onAddTask(newTask)
+    onOpenChange(false)
+    resetForm()
+  }
+
+  /**
+   * Handle dialog close
+   */
+  const handleClose = () => {
+    onOpenChange(false)
+    resetForm()
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden dialog-content">
-        {/* Dialog header with back button and title */}
-        <DialogHeader className="px-6 pt-5 pb-4">
-          <div className="flex items-center">
-            <Button variant="ghost" size="icon" onClick={onBackToTasks} className="h-8 w-8 mr-2.5 rounded-full">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-            <div>
-              <DialogTitle className="text-base font-normal">
-                Add Task for {selectedDate ? format(selectedDate, "MMMM d, yyyy") : ""}
-              </DialogTitle>
-            </div>
-          </div>
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[520px] overflow-y-auto">
+        <DialogHeader className="px-6 py-4">
+          <DialogTitle className="text-lg font-medium">Add New Task</DialogTitle>
+          <DialogDescription className="text-sm mt-1">
+            Create a new task with all the required details.
+          </DialogDescription>
         </DialogHeader>
 
-        {/* Task form fields */}
-        <div className="px-6 py-4 space-y-5">
-          {/* Task title field */}
-          <div className="space-y-2">
-            <Label htmlFor="title" className="text-xs font-normal text-muted-foreground">
-              Task Title
-            </Label>
-            <Input
-              id="title"
-              placeholder="Enter task title"
-              value={newTask.title}
-              onChange={(e) => setNewTask({ ...newTask, title: e.target.value })}
-              className="h-9 text-sm border-0 bg-muted/30 focus:ring-0 focus-visible:ring-1"
-            />
-          </div>
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(onSubmit)}>
+            <div className="px-6 py-4 space-y-5 max-h-[70vh] overflow-y-auto">
+              {/* Title field */}
+              <FormField
+                control={form.control}
+                name="title"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium">Title</FormLabel>
+                    <FormControl>
+                      <Input placeholder="Enter task title" className="h-9" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
 
-          {/* Task description field */}
-          <div className="space-y-2">
-            <Label htmlFor="description" className="text-xs font-normal text-muted-foreground">
-              Description (Optional)
-            </Label>
-            <Textarea
-              id="description"
-              placeholder="Enter task description"
-              value={newTask.description}
-              onChange={(e) => setNewTask({ ...newTask, description: e.target.value })}
-              className="text-sm min-h-[80px] resize-none border-0 bg-muted/30 focus:ring-0 focus-visible:ring-1"
-            />
-          </div>
+              {/* Description field */}
+              <FormField
+                control={form.control}
+                name="description"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium">Description</FormLabel>
+                    <FormControl>
+                      <Textarea placeholder="Enter task description" className="resize-none min-h-[80px]" {...field} />
+                    </FormControl>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
 
-          {/* Task priority selection */}
-          <div className="space-y-2">
-            <Label htmlFor="priority" className="text-xs font-normal text-muted-foreground">
-              Priority
-            </Label>
-            <Select
-              value={newTask.priority}
-              onValueChange={(value: Priority) => setNewTask({ ...newTask, priority: value })}
-            >
-              <SelectTrigger
-                id="priority"
-                className="h-9 text-sm border-0 bg-muted/30 focus:ring-0 focus-visible:ring-1"
-              >
-                <SelectValue placeholder="Select priority" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="high" className="text-sm">
-                  <span className="text-red-600 dark:text-red-400">High Priority</span>
-                </SelectItem>
-                <SelectItem value="medium" className="text-sm">
-                  <span className="text-amber-600 dark:text-amber-400">Medium Priority</span>
-                </SelectItem>
-                <SelectItem value="low" className="text-sm">
-                  <span className="text-blue-600 dark:text-blue-400">Low Priority</span>
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+              {/* Type and Origin fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="type"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">Document Type</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select document type" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Physical Document">Physical Document</SelectItem>
+                          <SelectItem value="Digital Document">Digital Document</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
 
-        {/* Dialog footer with action buttons */}
-        <DialogFooter className="px-6 py-4">
-          <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)} className="text-xs h-9 font-normal">
-            Cancel
-          </Button>
-          <Button
-            size="sm"
-            onClick={handleAddTask}
-            disabled={!newTask.title.trim()}
-            className="text-xs h-9 px-4 font-normal"
-          >
-            Add Task
-          </Button>
-        </DialogFooter>
+                <FormField
+                  control={form.control}
+                  name="origin"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">Task Origin</FormLabel>
+                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                        <FormControl>
+                          <SelectTrigger className="h-9">
+                            <SelectValue placeholder="Select origin" />
+                          </SelectTrigger>
+                        </FormControl>
+                        <SelectContent>
+                          <SelectItem value="Internal">Internal</SelectItem>
+                          <SelectItem value="External">External</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Priority field */}
+              <FormField
+                control={form.control}
+                name="priority"
+                render={({ field }) => (
+                  <FormItem className="space-y-2">
+                    <FormLabel className="text-sm font-medium">Priority</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger className="h-9">
+                          <SelectValue placeholder="Select priority" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="high" className="text-[hsl(var(--priority-high-text))]">
+                          High Priority
+                        </SelectItem>
+                        <SelectItem value="medium" className="text-[hsl(var(--priority-medium-text))]">
+                          Medium Priority
+                        </SelectItem>
+                        <SelectItem value="low" className="text-[hsl(var(--priority-low-text))]">
+                          Low Priority
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage className="text-xs" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Date Received and Time Received fields */}
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="dateReceived"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">Date Received</FormLabel>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <FormControl>
+                            <Button
+                              variant="outline"
+                              className={cn(
+                                "w-full justify-start text-left font-normal h-9",
+                                !field.value && "text-muted-foreground",
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4 text-muted-foreground" />
+                              {field.value ? format(field.value, "MMM d, yyyy") : "Select date"}
+                            </Button>
+                          </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus />
+                        </PopoverContent>
+                      </Popover>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="timeReceived"
+                  render={({ field }) => (
+                    <FormItem className="space-y-2">
+                      <FormLabel className="text-sm font-medium">Time Received</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input type="time" className="pl-9 h-9" {...field} />
+                          <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+                        </div>
+                      </FormControl>
+                      <FormMessage className="text-xs" />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              {/* Remove the Due Date field section */}
+            </div>
+
+            <DialogFooter className="px-6 py-4 flex justify-end gap-2">
+              <Button variant="outline" type="button" onClick={handleClose} className="h-9">
+                Cancel
+              </Button>
+              <Button type="submit" className="h-9">
+                Add Task
+              </Button>
+            </DialogFooter>
+          </form>
+        </Form>
       </DialogContent>
     </Dialog>
   )

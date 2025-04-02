@@ -31,7 +31,7 @@ import {
   isTaskOnDay,
   isCurrentOrFuture,
 } from "@/lib/calendar-utils"
-import type { Task, Priority } from "@/lib/types"
+import type { Task } from "@/lib/types"
 import { fetchTask } from "@/server/queries/fetch-task"
 import { Separator } from "@/components/ui/separator"
 
@@ -103,31 +103,8 @@ export default function CalendarBoard(): JSX.Element {
     setIsAddTaskOpen(true)
   }
 
-  // Handle going back from add task dialog to view tasks
-  const handleBackToTasks = (): void => {
-    setIsAddTaskOpen(false)
-    setIsViewTasksOpen(true)
-  }
 
-  // Handle adding a new task for the selected date
-  const handleAddTask = (newTask: { title: string; description: string; priority: Priority }): void => {
-    if (selectedDate && newTask.title.trim()) {
-      const newTaskItem: Task = {
-        id: `task-${Date.now()}`, // Generate unique ID
-        title: newTask.title,
-        description: newTask.description,
-        dueDate: formatDateToString(selectedDate),
-        // Use dateCompleted check instead of task.completed
-        dateCompleted: undefined,
-        priority: newTask.priority,
-      }
-      const updatedTasks = [...tasks, newTaskItem]
-      setTasks(updatedTasks)
-      localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks))
-      setIsAddTaskOpen(false)
-      setIsViewTasksOpen(true)
-    }
-  }
+
 
   // Handle clicking on a task to view its details
   const handleTaskClick = (taskId: string): void => {
@@ -153,6 +130,22 @@ export default function CalendarBoard(): JSX.Element {
   const tooltipStyles = {
     content: "bg-background text-foreground border border-border shadow-sm",
     taskTooltip: "max-w-[300px] p-0 overflow-hidden bg-background text-foreground border border-border shadow-sm",
+  }
+
+  // Update the handleAddTask function
+  const handleAddTasks = (newTask: Omit<Task, "id">): void => {
+    if (selectedDate && newTask.title.trim()) {
+      const newTaskItem: Task = {
+        id: `task-${Date.now()}`, // Generate unique ID
+        ...newTask,
+        dueDate: formatDateToString(selectedDate),
+      }
+      const updatedTasks = [...tasks, newTaskItem]
+      setTasks(updatedTasks)
+      localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks))
+      setIsAddTaskOpen(false)
+      setIsViewTasksOpen(true)
+    }
   }
 
   return (
@@ -377,12 +370,11 @@ export default function CalendarBoard(): JSX.Element {
 
           {/* Add Task Dialog Component */}
           <AddTaskDialog
-            isOpen={isAddTaskOpen}
-            onOpenChange={setIsAddTaskOpen}
-            selectedDate={selectedDate}
-            onBackToTasks={handleBackToTasks}
-            onAddTask={handleAddTask}
-          />
+              open={isAddTaskOpen}
+              onOpenChange={setIsAddTaskOpen}
+              onAddTask={handleAddTasks}
+              selectedDate={selectedDate || new Date()}
+            />
         </div>
       </TooltipProvider>
     </TasksContext.Provider>
