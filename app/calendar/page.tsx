@@ -173,7 +173,7 @@ export default function CalendarBoard(): JSX.Element {
             </div>
 
             {/* Calendar grid */}
-            <Card className="h-[690px] overflow-hidden border-none shadow-sm">
+            <Card className="h-[690px] overflow-hidden border-none shadow-none bg-white dark:bg-black">
               <CardContent className="h-[690px] p-0 flex flex-col">
                 {/* Calendar header: Days of week */}
                 <div className="grid grid-cols-7 border-b border-border/40">
