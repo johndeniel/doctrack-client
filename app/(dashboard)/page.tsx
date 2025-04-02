@@ -17,6 +17,7 @@ import { TaskSearch } from "@/app/(dashboard)/components/task-search"
 import { ViewToggle } from "@/app/(dashboard)/components/view-toggle"
 import { EmptyState } from "@/app/(dashboard)/components/empty-state"
 import { fetchTask } from "@/server/queries/fetch-task" 
+import { AddTaskDialog } from "@/app/(dashboard)/components/add-task-dialog"
 
 // Utility and Type Imports
 import { 
@@ -52,7 +53,7 @@ export default function TasksView() {
   // Sorting State: Sorting by option and direction
   const [sortBy, setSortBy] = useState<TaskSortOption>("date")
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc")
-
+  const [addTaskDialogOpen, setAddTaskDialogOpen] = useState(false)
   // Load Sample Tasks on Component Mount
   useEffect(() => {
     const loadTasks = async () => {
@@ -111,6 +112,24 @@ export default function TasksView() {
     setSearchQuery("")
   }, [])
 
+    const handleAddNewTask = (taskData: Omit<Task, "id">) => {
+    // Generate a unique ID for the new task
+    const newTaskId = `task-${Date.now()}`
+
+    // Create the new task with ID
+    const newTask: Task = {
+      id: newTaskId,
+      ...taskData,
+    }
+
+    // Add the new task to the tasks array
+    const updatedTasks = [...tasks, newTask]
+    setTasks(updatedTasks)
+
+    // Update localStorage
+    localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks))
+  }
+
   // Intelligent Sorting Logic to toggle sort direction
   const handleToggleSort = useCallback((sortType: TaskSortOption) => {
     setSortBy(current => sortType !== current ? sortType : current)
@@ -128,8 +147,8 @@ export default function TasksView() {
 
   // Navigation handler for adding a new task
   const handleAddTask = useCallback(() => {
-    router.push("/add-task")
-  }, [router])
+    setAddTaskDialogOpen(true)
+  }, [])
 
   // Toggle task completion using immutable updates.
   // Determines if the task is completed by checking if dateCompleted exists.
@@ -307,6 +326,8 @@ export default function TasksView() {
           )}
         </ScrollArea>
       </div>
+       {/* Add Task Dialog */}
+       <AddTaskDialog open={addTaskDialogOpen} onOpenChange={setAddTaskDialogOpen} onAddTask={handleAddNewTask} />
     </div>
   )
 }

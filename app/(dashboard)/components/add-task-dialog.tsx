@@ -1,5 +1,5 @@
 "use client"
-import { format } from "date-fns"
+import { format, isBefore, startOfDay } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,8 +19,8 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formatDateToString } from "@/lib/task-utils"
 import type { Priority, Task } from "@/lib/types"
+import { formatDateToString } from "@/lib/calendar-utils"
 
 // Form schema with validation
 const formSchema = z.object({
@@ -39,6 +39,11 @@ const formSchema = z.object({
     required_error: "Date received is required",
   }),
   timeReceived: z.string().min(1, "Time received is required"),
+  dueDate: z
+  .date({
+    required_error: "Due date is required",
+  })
+  .refine((date) => !isBefore(date, startOfDay(new Date())), "Due date cannot be in the past"),
 })
 
 type FormValues = z.infer<typeof formSchema>
@@ -47,14 +52,13 @@ interface AddTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAddTask: (task: Omit<Task, "id">) => void
-  selectedDate: Date
 }
 
 /**
  * AddTaskDialog component provides a form for adding new tasks
  * It includes fields for title, description, type, origin, priority, and dates
  */
-export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: AddTaskDialogProps) {
+export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogProps) {
   // Initialize form with default values
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -66,6 +70,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
       priority: "medium",
       dateReceived: new Date(),
       timeReceived: format(new Date(), "HH:mm"),
+      dueDate: new Date(),
     },
   })
 
@@ -93,7 +98,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
       title: values.title,
       description: values.description,
       priority: values.priority as Priority,
-      dueDate: formatDateToString(selectedDate),
+      dueDate:  formatDateToString(values.dueDate),
       dateCompleted: undefined,
     }
 
@@ -286,7 +291,45 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                     </FormItem>
                   )}
                 />
+
+                 
               </div>
+              {/* Due Date field */}
+              <FormField
+                    control={form.control}
+                    name="dueDate"
+                    render={({ field }) => (
+                      <FormItem className="space-y-2.5">
+                        <FormLabel className="text-sm font-medium">Due Date</FormLabel>
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <FormControl>
+                              <Button
+                                variant="outline"
+                                className={cn(
+                                  "w-full justify-start text-left font-normal h-10 rounded-md bg-background border-border/60 hover:bg-muted/10 transition-all",
+                                  !field.value && "text-muted-foreground"
+                                )}
+                              >
+                                <CalendarIcon className="mr-3 h-4 w-4 text-muted-foreground" />
+                                {field.value ? format(field.value, "PPP") : "Select date"}
+                              </Button>
+                            </FormControl>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0" align="start">
+                            <Calendar
+                              mode="single"
+                              selected={field.value}
+                              onSelect={field.onChange}
+                              disabled={(date) => isBefore(date, startOfDay(new Date()))}
+                              initialFocus
+                            />
+                          </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
             </div>
 
             <DialogFooter className="px-6 py-4 flex justify-between">
