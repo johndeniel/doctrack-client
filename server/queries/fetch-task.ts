@@ -14,7 +14,7 @@ interface TasksResponse {
  * @returns Promise resolving to an array of Task objects
  * @throws Error if the fetch operation fails or environment is misconfigured
  */
-export async function fetchTask(): Promise<Task[]> {
+export async function fetchTasks(): Promise<Task[]> {
   // Retrieve base URL from environment variables
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL;
   
@@ -24,7 +24,7 @@ export async function fetchTask(): Promise<Task[]> {
   }
   
   // Construct the full API endpoint URL
-  const url = `${baseUrl}/api/task`;
+  const url = `${baseUrl}/api/tasks`;
 
   try {
     // Implement request with AbortController for timeout capability

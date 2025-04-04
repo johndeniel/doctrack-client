@@ -16,8 +16,8 @@ import { TaskSort } from "@/app/(dashboard)/components/task-sort"
 import { TaskSearch } from "@/app/(dashboard)/components/task-search"
 import { ViewToggle } from "@/app/(dashboard)/components/view-toggle"
 import { EmptyState } from "@/app/(dashboard)/components/empty-state"
-import { fetchTask } from "@/server/queries/fetch-task" 
 import { AddTaskDialog } from "@/app/(dashboard)/components/add-task-dialog"
+import { fetchTasks } from "@/server/queries/fetch-task" 
 
 // Utility and Type Imports
 import { 
@@ -113,7 +113,7 @@ export default function TasksView() {
       setError(null)
       
       try {
-        const fetchedTasks = await fetchTask()
+        const fetchedTasks = await fetchTasks()
         
         // Only update state if component is still mounted
         if (isMountedRef.current) {

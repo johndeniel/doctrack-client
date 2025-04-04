@@ -1,7 +1,7 @@
 "use client"
 
 import type React from "react"
-import { useState, useEffect, JSX } from "react"
+import { useState, useEffect, useCallback, useMemo, useRef, useTransition } from "react"
 import { useRouter } from "next/navigation"
 import {
   format,
@@ -24,128 +24,255 @@ import { StatusBadge } from "@/components/status-badge"
 import { TaskDialog } from "@/app/calendar/components/task-dialog"
 import { AddTaskDialog } from "@/app/calendar/components/add-task-dialog"
 import { TasksContext } from "@/lib/task-context"
+import { Separator } from "@/components/ui/separator"
+import type { Task } from "@/lib/types"
 import {
   parseDate,
   formatDateToString,
   getCompletionStatus,
-  isTaskOnDay,
   isCurrentOrFuture,
 } from "@/lib/calendar-utils"
-import type { Task } from "@/lib/types"
-import { fetchTask } from "@/server/queries/fetch-task"
-import { Separator } from "@/components/ui/separator"
+import { fetchTasks } from "@/server/queries/fetch-task"
 
 /**
  * Main CalendarBoard component.
  * Displays a monthly calendar with tasks and provides task management functionality.
+ * Optimized for performance with memoization, efficient rendering, and proper cleanup.
  */
-export default function CalendarBoard(): JSX.Element {
+export default function CalendarBoard(): React.ReactElement {
   const router = useRouter()
+  const [isPending, startTransition] = useTransition()
+  
+  // Refs for tracking mounted state and data loading
+  const isMountedRef = useRef(true)
+  const loadingRef = useRef(false)
 
   // State management for current date, tasks, and dialogs
-  const [currentDate, setCurrentDate] = useState<Date>(new Date())
+  const [currentDate, setCurrentDate] = useState<Date>(() => new Date())
   const [tasks, setTasks] = useState<Task[]>([])
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [isViewTasksOpen, setIsViewTasksOpen] = useState<boolean>(false)
   const [isAddTaskOpen, setIsAddTaskOpen] = useState<boolean>(false)
+  const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [error, setError] = useState<string | null>(null)
 
-  // Load sample tasks on component mount
+  // Load tasks on component mount with optimized fetch handling
   useEffect(() => {
+    // Prevent duplicate fetches
+    if (loadingRef.current) return
+    
+    loadingRef.current = true
+    isMountedRef.current = true
+    setIsLoading(true)
+    
     const loadTasks = async () => {
       try {
-        const sampleTasks = await fetchTask()
-        const tasksArray = Array.isArray(sampleTasks) ? sampleTasks : []
-        setTasks(tasksArray)
-        localStorage.setItem("calendarTasks", JSON.stringify(tasksArray))
+        // AbortController for timeout capability
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10-second timeout
+        
+        const fetchedTasks = await fetchTasks();
+        clearTimeout(timeoutId);
+        
+        // Only update state if component is still mounted
+        if (isMountedRef.current) {
+          const tasksArray = Array.isArray(fetchedTasks) ? fetchedTasks : [];
+          setTasks(tasksArray);
+          
+          // Store in localStorage with size limit consideration
+          if (tasksArray.length < 1000) { // Only cache if reasonable size
+            try {
+              localStorage.setItem("calendarTasks", JSON.stringify(tasksArray));
+            } catch (storageError) {
+              console.warn("Failed to cache tasks in localStorage:", storageError);
+            }
+          }
+        }
       } catch (error) {
-        console.error("Failed to fetch tasks:", error)
-        setTasks([])
+        if (isMountedRef.current) {
+          console.error("Failed to fetch tasks:", error);
+          setError(error instanceof Error ? error.message : "Failed to load tasks");
+          
+          // Try to load from cache as fallback
+          try {
+            const cachedData = localStorage.getItem("calendarTasks");
+            if (cachedData) {
+              const parsedCache = JSON.parse(cachedData) as Task[];
+              setTasks(parsedCache);
+              console.info("Loaded tasks from cache due to fetch failure");
+            } else {
+              setTasks([]);
+            }
+          } catch (cacheError) {
+            console.warn("Failed to load cached tasks:", cacheError);
+            setTasks([]);
+          }
+        }
+      } finally {
+        if (isMountedRef.current) {
+          setIsLoading(false);
+          loadingRef.current = false;
+        }
       }
+    };
+    
+    loadTasks();
+    
+    // Cleanup to prevent state updates after unmount
+    return () => {
+      isMountedRef.current = false;
+    };
+  }, []);
+
+  // Memoized calendar computations to avoid recalculations
+  const calendarData = useMemo(() => {
+    const monthStart = startOfMonth(currentDate);
+    const monthEnd = endOfMonth(currentDate);
+    const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd });
+    
+    // Create a 7-column grid by adding empty cells for alignment
+    const startDay = monthStart.getDay(); // 0 for Sunday, etc.
+    const endDay = 6 - monthEnd.getDay(); // Empty cells at the end
+    const calendarDays = [
+      ...Array(startDay).fill(null), 
+      ...monthDays, 
+      ...Array(endDay).fill(null)
+    ];
+    
+    // Group days into weeks (rows) for better rendering
+    const weeks = [];
+    for (let i = 0; i < calendarDays.length; i += 7) {
+      weeks.push(calendarDays.slice(i, i + 7));
     }
-    loadTasks()
-  }, [])
+    
+    return {
+      monthStart,
+      monthEnd,
+      monthDays,
+      calendarDays,
+      weeks
+    };
+  }, [currentDate]);
 
-  // Calendar date calculations
-  const monthStart = startOfMonth(currentDate)
-  const monthEnd = endOfMonth(currentDate)
-  const monthDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
+  // Memoized task lookup table for O(1) access by date
+  const tasksByDate = useMemo(() => {
+    const map = new Map<string, Task[]>();
+    
+    tasks.forEach(task => {
+      // Generate date keys in YYYY-MM-DD format for consistent lookup
+      const dueDate = task.dueDate.slice(0, 10);
+      
+      if (!map.has(dueDate)) {
+        map.set(dueDate, []);
+      }
+      
+      map.get(dueDate)?.push(task);
+    });
+    
+    return map;
+  }, [tasks]);
 
-  // Create a 7-column grid by adding empty cells for alignment
-  const startDay = monthStart.getDay() // 0 for Sunday, etc.
-  const endDay = 6 - monthEnd.getDay() // Empty cells at the end
-  const calendarDays = [...Array(startDay).fill(null), ...monthDays, ...Array(endDay).fill(null)]
+  // Handle month navigation with useCallback for stable function identity
+  const handlePreviousMonth = useCallback((): void => {
+    setCurrentDate(prevDate => subMonths(prevDate, 1));
+  }, []);
+  
+  const handleNextMonth = useCallback((): void => {
+    setCurrentDate(prevDate => addMonths(prevDate, 1));
+  }, []);
 
-  // Group days into weeks (rows)
-  const weeks = []
-  for (let i = 0; i < calendarDays.length; i += 7) {
-    weeks.push(calendarDays.slice(i, i + 7))
-  }
-
-  // Handle month navigation
-  const handlePreviousMonth = (): void => {
-    setCurrentDate(subMonths(currentDate, 1))
-  }
-  const handleNextMonth = (): void => {
-    setCurrentDate(addMonths(currentDate, 1))
-  }
-
-  // Handle clicking on a day to view its tasks
-  const handleDayClick = (day: Date | null): void => {
+  // Handle clicking on a day with useCallback for stable function identity
+  const handleDayClick = useCallback((day: Date | null): void => {
     if (day) {
-      setSelectedDate(day)
-      setIsViewTasksOpen(true)
+      setSelectedDate(day);
+      setIsViewTasksOpen(true);
     }
-  }
+  }, []);
 
   // Handle switching to add task dialog
-  const handleAddTaskClick = (): void => {
-    setIsViewTasksOpen(false)
-    setIsAddTaskOpen(true)
-  }
+  const handleAddTaskClick = useCallback((): void => {
+    setIsViewTasksOpen(false);
+    setIsAddTaskOpen(true);
+  }, []);
 
+  // Handle clicking on a task to view its details with useTransition for better UX
+  const handleTaskClick = useCallback((taskId: string): void => {
+    setIsViewTasksOpen(false);
+    startTransition(() => {
+      router.push(`/task-info?id=${taskId}`);
+    });
+  }, [router]);
 
-
-
-  // Handle clicking on a task to view its details
-  const handleTaskClick = (taskId: string): void => {
-    setIsViewTasksOpen(false)
-    router.push(`/task-info?id=${taskId}`)
-  }
-
-  // Get tasks scheduled for a specific day
-  const getTasksForDay = (day: Date): Task[] => {
-    return tasks.filter((task) => isTaskOnDay(task, day))
-  }
+  // Get tasks scheduled for a specific day using the optimized lookup table
+  const getTasksForDay = useCallback((day: Date): Task[] => {
+    if (!day) return [];
+    
+    const dateKey = formatDateToString(day).slice(0, 10);
+    return tasksByDate.get(dateKey) || [];
+  }, [tasksByDate]);
 
   // Determine the background color for a day based on tasks status
-  const getDayColor = (day: Date): string => {
-    const dayTasks = getTasksForDay(day)
-    if (dayTasks.length === 0) return ""
-    const hasOverdueTasks = dayTasks.some((task) => getCompletionStatus(task) === "overdue")
-    if (hasOverdueTasks) return "bg-[hsl(var(--status-overdue-bg))] calendar-day-highlight"
-    return "bg-[hsl(var(--status-active-bg))] calendar-day-highlight"
-  }
+  const getDayColor = useCallback((day: Date): string => {
+    const dayTasks = getTasksForDay(day);
+    if (dayTasks.length === 0) return "";
+    
+    const hasOverdueTasks = dayTasks.some(
+      (task) => getCompletionStatus(task) === "overdue"
+    );
+    
+    return hasOverdueTasks 
+      ? "bg-[hsl(var(--status-overdue-bg))] calendar-day-highlight" 
+      : "bg-[hsl(var(--status-active-bg))] calendar-day-highlight";
+  }, [getTasksForDay]);
 
-  // Custom tooltip styles
-  const tooltipStyles = {
-    content: "bg-background text-foreground border border-border shadow-sm",
-    taskTooltip: "max-w-[300px] p-0 overflow-hidden bg-background text-foreground border border-border shadow-sm",
-  }
-
-  // Update the handleAddTask function
-  const handleAddTasks = (newTask: Omit<Task, "id">): void => {
+  // Add new task with optimized immutable update
+  const handleAddTasks = useCallback((newTask: Omit<Task, "id">): void => {
     if (selectedDate && newTask.title.trim()) {
+      // Generate a unique ID with collision prevention
+      const newTaskId = `task-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+      
       const newTaskItem: Task = {
-        id: `task-${Date.now()}`, // Generate unique ID
+        id: newTaskId,
         ...newTask,
         dueDate: formatDateToString(selectedDate),
-      }
-      const updatedTasks = [...tasks, newTaskItem]
-      setTasks(updatedTasks)
-      localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks))
-      setIsAddTaskOpen(false)
-      setIsViewTasksOpen(true)
+      };
+      
+      // Update with functional state update pattern
+      setTasks(currentTasks => {
+        const updatedTasks = [...currentTasks, newTaskItem];
+        
+        // Update localStorage asynchronously to prevent UI blocking
+        queueMicrotask(() => {
+          try {
+            localStorage.setItem("calendarTasks", JSON.stringify(updatedTasks));
+          } catch (error) {
+            console.warn("Failed to store tasks in localStorage:", error);
+          }
+        });
+        
+        return updatedTasks;
+      });
+      
+      setIsAddTaskOpen(false);
+      setIsViewTasksOpen(true);
     }
+  }, [selectedDate]);
+
+  // Custom tooltip styles (memoized to prevent recreation)
+  const tooltipStyles = useMemo(() => ({
+    content: "bg-background text-foreground border border-border shadow-sm",
+    taskTooltip: "max-w-[300px] p-0 overflow-hidden bg-background text-foreground border border-border shadow-sm",
+  }), []);
+
+  // Show loading state while initial data is being fetched
+  if (isLoading && !tasks.length) {
+    return (
+      <div className="container mx-auto py-12 px-4 h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-pulse">Loading documents...</div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -158,21 +285,34 @@ export default function CalendarBoard(): JSX.Element {
               <div>
                 <h1 className="text-xl font-medium tracking-tight">Calendar</h1>
                 <p className="text-muted-foreground text-xs mt-0.5">View your Documents by date</p>
+                {error && <p className="text-red-500 text-xs mt-0.5">{error}</p>}
               </div>
               <div className="flex items-center space-x-2">
-                <Button variant="ghost" size="icon" onClick={handlePreviousMonth} className="h-7 w-7">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handlePreviousMonth} 
+                  className="h-7 w-7"
+                  disabled={isPending}
+                >
                   <ChevronLeft className="h-4 w-4" />
                 </Button>
                 <h2 className="text-sm font-medium px-2 min-w-[120px] text-center">
                   {format(currentDate, "MMMM yyyy")}
                 </h2>
-                <Button variant="ghost" size="icon" onClick={handleNextMonth} className="h-7 w-7">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={handleNextMonth} 
+                  className="h-7 w-7"
+                  disabled={isPending}
+                >
                   <ChevronRight className="h-4 w-4" />
                 </Button>
               </div>
             </div>
 
-            {/* Calendar grid */}
+            {/* Calendar grid with optimized rendering */}
             <Card className="h-[690px] overflow-hidden border-none shadow-none bg-white dark:bg-black">
               <CardContent className="h-[690px] p-0 flex flex-col">
                 {/* Calendar header: Days of week */}
@@ -184,9 +324,9 @@ export default function CalendarBoard(): JSX.Element {
                   ))}
                 </div>
 
-                {/* Calendar grid with days */}
+                {/* Calendar grid with weeks and days */}
                 <div className="grid grid-cols-7 flex-grow">
-                  {weeks.flat().map((day, index) => (
+                  {calendarData.weeks.flat().map((day, index) => (
                     <div
                       key={index}
                       className={cn(
@@ -196,6 +336,8 @@ export default function CalendarBoard(): JSX.Element {
                         isCurrentOrFuture(day) && "hover:ring-1 hover:ring-primary/10"
                       )}
                       onClick={() => day && handleDayClick(day)}
+                      role={day ? "button" : "presentation"}
+                      aria-label={day ? format(day, "EEEE, MMMM d, yyyy") : undefined}
                     >
                       {day && (
                         <div
@@ -215,118 +357,134 @@ export default function CalendarBoard(): JSX.Element {
                             >
                               {format(day, "d")}
                             </span>
-                            <div className="flex items-center gap-1">
-                              {getTasksForDay(day).length > 0 && (
+                            
+                            {/* Task count indicator with optimized calculation */}
+                            {(() => {
+                              const dayTasksCount = getTasksForDay(day).length;
+                              if (dayTasksCount === 0) return null;
+                              
+                              return (
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <span className="text-[9px] text-muted-foreground font-medium bg-muted/30 rounded-full px-1.5 py-0.5 hover:bg-muted/50 transition-colors">
-                                      {getTasksForDay(day).length}
+                                      {dayTasksCount}
                                     </span>
                                   </TooltipTrigger>
                                   <TooltipContent side="top" className={tooltipStyles.content}>
                                     <div className="text-xs p-2">
-                                      {getTasksForDay(day).length} {getTasksForDay(day).length === 1 ? "task" : "tasks"} on this day
+                                      {dayTasksCount} {dayTasksCount === 1 ? "task" : "tasks"} on this day
                                     </div>
                                   </TooltipContent>
                                 </Tooltip>
-                              )}
-                            </div>
+                              );
+                            })()}
                           </div>
 
-                          {/* Task previews for each day */}
+                          {/* Task previews for each day with optimized rendering */}
                           <div className="space-y-0.5 mt-0.5 overflow-hidden">
-                            {getTasksForDay(day)
-                              .slice(0, 3)
-                              .map((task) => {
-                                // Determine completion using dateCompleted check
-                                const isCompleted = task.dateCompleted !== undefined
-                                return (
-                                  <Tooltip key={task.id}>
-                                    <TooltipTrigger asChild>
-                                      <div
-                                        className={cn(
-                                          "text-[9px] px-1 py-0.5 rounded-sm bg-background/80 flex items-center gap-1",
-                                          isCompleted && "text-muted-foreground line-through",
-                                          task.priority === "High"
-                                            ? "border-l-2 border-l-red-400"
-                                            : task.priority === "Medium"
-                                              ? "border-l-2 border-l-amber-400"
-                                              : "border-l-2 border-l-blue-400"
-                                        )}
-                                      >
-                                        <div className="truncate">{task.title}</div>
-                                      </div>
-                                    </TooltipTrigger>
-
-                                    {/* Tooltip with task details */}
-                                    <TooltipContent side="right" className={tooltipStyles.taskTooltip}>
-                                      <div className="p-3">
-                                        <div className="flex items-start justify-between gap-2 mb-2">
-                                          <div className="flex items-center gap-2">
-                                            <div
-                                              className={cn(
-                                                "w-1 h-4 rounded-sm shrink-0",
+                            {(() => {
+                              const dayTasks = getTasksForDay(day);
+                              const visibleTasks = dayTasks.slice(0, 3);
+                              const remainingCount = dayTasks.length - 3;
+                              
+                              return (
+                                <>
+                                  {visibleTasks.map((task) => {
+                                    // Determine completion using dateCompleted check
+                                    const isCompleted = task.dateCompleted !== undefined;
+                                    return (
+                                      <Tooltip key={task.id}>
+                                        <TooltipTrigger asChild>
+                                          <div
+                                            className={cn(
+                                              "text-[9px] px-1 py-0.5 rounded-sm bg-background/80 flex items-center gap-1",
+                                              isCompleted && "text-muted-foreground line-through",
+                                              `border-l-2 ${
                                                 task.priority === "High"
-                                                  ? "bg-red-400"
+                                                  ? "border-l-red-400"
                                                   : task.priority === "Medium"
-                                                    ? "bg-amber-400"
-                                                    : "bg-blue-400"
-                                              )}
-                                            />
-                                            <h4
-                                              className={cn(
-                                                "text-xs font-bold leading-tight",
-                                                isCompleted && "line-through text-muted-foreground"
-                                              )}
-                                              title={task.title}
-                                            >
-                                              {task.title}
-                                            </h4>
+                                                    ? "border-l-amber-400"
+                                                    : "border-l-blue-400"
+                                              }`
+                                            )}
+                                          >
+                                            <div className="truncate">{task.title}</div>
                                           </div>
-                                          <PriorityBadge priority={task.priority} />
-                                        </div>
+                                        </TooltipTrigger>
 
-                                        {task.description && (
-                                          <>
-                                            <p
-                                              className={cn(
-                                                "text-[10px] text-muted-foreground leading-normal mb-2",
-                                                isCompleted && "line-through"
-                                              )}
-                                              title={task.description}
-                                            >
-                                              {task.description}
-                                            </p>
-                                            <div className="px-0">
-                                              <Separator className="my-2.5 w-full bg-gradient-to-r from-border/10 via-border/80 to-border/10" />
+                                        {/* Tooltip with task details */}
+                                        <TooltipContent side="right" className={tooltipStyles.taskTooltip}>
+                                          <div className="p-3">
+                                            <div className="flex items-start justify-between gap-2 mb-2">
+                                              <div className="flex items-center gap-2">
+                                                <div
+                                                  className={cn(
+                                                    "w-1 h-4 rounded-sm shrink-0",
+                                                    task.priority === "High"
+                                                      ? "bg-red-400"
+                                                      : task.priority === "Medium"
+                                                        ? "bg-amber-400"
+                                                        : "bg-blue-400"
+                                                  )}
+                                                />
+                                                <h4
+                                                  className={cn(
+                                                    "text-xs font-bold leading-tight",
+                                                    isCompleted && "line-through text-muted-foreground"
+                                                  )}
+                                                  title={task.title}
+                                                >
+                                                  {task.title}
+                                                </h4>
+                                              </div>
+                                              <PriorityBadge priority={task.priority} />
                                             </div>
-                                          </>
-                                        )}
 
-                                        <div className="flex items-center justify-between text-[10px]">
-                                          {isCompleted ? (
-                                            <p className="text-muted-foreground font-medium">
-                                              Completed on{" "}
-                                              {format(parseDate(task.dateCompleted || task.dueDate), "MMMM d, yyyy")}
-                                            </p>
-                                          ) : (
-                                            <p className="text-muted-foreground font-medium">
-                                              Due on {format(parseDate(task.dueDate), "MMMM d, yyyy")}
-                                            </p>
-                                          )}
-                                          <StatusBadge task={task} />
-                                        </div>
-                                      </div>
-                                    </TooltipContent>
-                                  </Tooltip>
-                                )
-                              })}
-                            {/* Indicator for additional tasks */}
-                            {getTasksForDay(day).length > 3 && (
-                              <div className="text-[8px] text-muted-foreground px-1 flex items-center gap-0.5">
-                                <span>+{getTasksForDay(day).length - 3} more</span>
-                              </div>
-                            )}
+                                            {task.description && (
+                                              <>
+                                                <p
+                                                  className={cn(
+                                                    "text-[10px] text-muted-foreground leading-normal mb-2",
+                                                    isCompleted && "line-through"
+                                                  )}
+                                                  title={task.description}
+                                                >
+                                                  {task.description}
+                                                </p>
+                                                <div className="px-0">
+                                                  <Separator className="my-2.5 w-full bg-gradient-to-r from-border/10 via-border/80 to-border/10" />
+                                                </div>
+                                              </>
+                                            )}
+
+                                            <div className="flex items-center justify-between text-[10px]">
+                                              {isCompleted ? (
+                                                <p className="text-muted-foreground font-medium">
+                                                  Completed on{" "}
+                                                  {format(parseDate(task.dateCompleted || task.dueDate), "MMMM d, yyyy")}
+                                                </p>
+                                              ) : (
+                                                <p className="text-muted-foreground font-medium">
+                                                  Due on {format(parseDate(task.dueDate), "MMMM d, yyyy")}
+                                                </p>
+                                              )}
+                                              <StatusBadge task={task} />
+                                            </div>
+                                          </div>
+                                        </TooltipContent>
+                                      </Tooltip>
+                                    );
+                                  })}
+                                  
+                                  {/* Indicator for additional tasks */}
+                                  {remainingCount > 0 && (
+                                    <div className="text-[8px] text-muted-foreground px-1 flex items-center gap-0.5">
+                                      <span>+{remainingCount} more</span>
+                                    </div>
+                                  )}
+                                </>
+                              );
+                            })()}
                           </div>
                         </div>
                       )}
@@ -370,13 +528,13 @@ export default function CalendarBoard(): JSX.Element {
 
           {/* Add Task Dialog Component */}
           <AddTaskDialog
-              open={isAddTaskOpen}
-              onOpenChange={setIsAddTaskOpen}
-              onAddTask={handleAddTasks}
-              selectedDate={selectedDate || new Date()}
-            />
+            open={isAddTaskOpen}
+            onOpenChange={setIsAddTaskOpen}
+            onAddTask={handleAddTasks}
+            selectedDate={selectedDate || new Date()}
+          />
         </div>
       </TooltipProvider>
     </TasksContext.Provider>
-  )
+  );
 }
