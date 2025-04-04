@@ -20,7 +20,7 @@ interface TaskFiltersProps {
 }
 
 // Define filter options for priority and status
-const PRIORITY_OPTIONS: Priority[] = ["high", "medium", "low"]
+const PRIORITY_OPTIONS: Priority[] = ["High", "Medium", "Low"]
 const STATUS_OPTIONS: CompletionStatus[] = ["active", "overdue", "completed on time", "completed late"]
 
 export function TaskFilters({

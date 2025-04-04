@@ -32,8 +32,7 @@ export async function fetchTask(): Promise<Task[]> {
     // Process the tasks array
     const processedTasks = tasksArray.map((task: any) => ({
       ...task,
-      dateCompleted: task.dateCompleted === 'undefined' ? undefined : task.dateCompleted,
-      priority: task.priority?.toLowerCase() // ensure priority is lowercase, with optional chaining
+      dateCompleted: task.dateCompleted === 'undefined' ? undefined : task.dateCompleted
     }))
 
     return processedTasks

@@ -8,7 +8,7 @@ export type TaskSortOption = "date" | "priority" | "title" | "status"
 export type SortDirection = "asc" | "desc"
 
 // Priority levels for tasks
-export type Priority = "high" | "medium" | "low"
+export type Priority = "High" | "Medium" | "Low"
 
 // Task completion status types
 export type CompletionStatus = "active" | "overdue" | "completed on time" | "completed late" 

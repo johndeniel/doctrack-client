@@ -95,7 +95,7 @@ export const sortTasks = (
       const dateB = parseDate(b.dueDate).getTime()
       return sortDirection === "asc" ? dateA - dateB : dateB - dateA
     } else if (sortBy === "priority") {
-      const priorityOrder = { high: 3, medium: 2, low: 1 }
+      const priorityOrder = { High: 3, Medium: 2, Low: 1 }
       const priorityA = priorityOrder[a.priority]
       const priorityB = priorityOrder[b.priority]
       return sortDirection === "asc" ? priorityA - priorityB : priorityB - priorityA

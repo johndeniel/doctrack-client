@@ -9,17 +9,17 @@ import type { Priority} from "@/lib/types"
 export const PriorityBadge = ({ priority }: { priority: Priority }) => {
   // Define styling and labels for each priority level.
   const priorityConfig = {
-    high: {
+    High: {
       label: "High",
       className:
         "text-[hsl(var(--priority-high-text))] bg-[hsl(var(--priority-high-bg))] border-[hsl(var(--priority-high-border))]",
     },
-    medium: {
+    Medium: {
       label: "Medium",
       className:
         "text-[hsl(var(--priority-medium-text))] bg-[hsl(var(--priority-medium-bg))] border-[hsl(var(--priority-medium-border))]",
     },
-    low: {
+    Low: {
       label: "Low",
       className:
         "text-[hsl(var(--priority-low-text))] bg-[hsl(var(--priority-low-bg))] border-[hsl(var(--priority-low-border))]",

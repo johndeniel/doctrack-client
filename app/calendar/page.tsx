@@ -247,9 +247,9 @@ export default function CalendarBoard(): JSX.Element {
                                         className={cn(
                                           "text-[9px] px-1 py-0.5 rounded-sm bg-background/80 flex items-center gap-1",
                                           isCompleted && "text-muted-foreground line-through",
-                                          task.priority === "high"
+                                          task.priority === "High"
                                             ? "border-l-2 border-l-red-400"
-                                            : task.priority === "medium"
+                                            : task.priority === "Medium"
                                               ? "border-l-2 border-l-amber-400"
                                               : "border-l-2 border-l-blue-400"
                                         )}
@@ -266,9 +266,9 @@ export default function CalendarBoard(): JSX.Element {
                                             <div
                                               className={cn(
                                                 "w-1 h-4 rounded-sm shrink-0",
-                                                task.priority === "high"
+                                                task.priority === "High"
                                                   ? "bg-red-400"
-                                                  : task.priority === "medium"
+                                                  : task.priority === "Medium"
                                                     ? "bg-amber-400"
                                                     : "bg-blue-400"
                                               )}
