@@ -43,7 +43,6 @@ export async function GET() {
                    tt.task_title AS title, 
                    tt.task_description AS description, 
                    DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
-                   CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
                    CASE 
                        WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
                        ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
