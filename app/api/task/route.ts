@@ -1,83 +1,94 @@
+// app/task/route.ts
 import { NextResponse } from 'next/server';
 import { Query } from '@/lib/db/mysql-connection-helper';
 import { getTokenFromCookie, verifyToken } from '@/lib/jwt';
 
-export async function GET() {
-   try {
-       // Retrieve authentication token from cookies
-       const token = await getTokenFromCookie();
-       
-       // Return 401 response if token is not present
-       if (!token) {
-           return NextResponse.json(
-               { 
-                   code: 'UNAUTHORIZED', 
-                   message: 'No authentication token found' 
-               }, 
-               { status: 401 }
-           );
-       }
+/**
+ * GET endpoint to retrieve tasks for an authenticated user's division
+ * @returns JSON response with tasks data or error details
+ */
+export async function GET(): Promise<NextResponse> {
+  try {
+    // Authenticate request with token from cookies
+    const token = await getTokenFromCookie();
+    
+    if (!token) {
+      return createErrorResponse(401, 'UNAUTHORIZED', 'No authentication token found');
+    }
 
-       // Validate token and extract payload
-       const tokenPayload = await verifyToken(token);
-       
-       // Return 401 response if token validation fails
-       if (!tokenPayload) {
-           return NextResponse.json(
-               { 
-                   code: 'INVALID_TOKEN', 
-                   message: 'Invalid authentication token' 
-               }, 
-               { status: 401 }
-           );
-       }
+    // Verify token and extract user information
+    const tokenPayload = await verifyToken(token);
+    
+    if (!tokenPayload?.division) {
+      return createErrorResponse(401, 'INVALID_TOKEN', 'Invalid or insufficient authentication token');
+    }
 
-       // Extract division identifier from token payload
-       const division = tokenPayload.division;
+    // Retrieve tasks for the user's division
+    const divisionId = tokenPayload.division;
+    const tasks = await fetchTasksByDivision(divisionId);
 
-       // Define SQL query to fetch tasks for the specified division
-       const tasksQuery = {
-           query: `
-               SELECT DISTINCT 
-                   tt.task_uuid AS id, 
-                   tt.task_title AS title, 
-                   tt.task_description AS description, 
-                   DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
-                   CASE 
-                       WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
-                       ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
-                   END AS dateCompleted,
-                   tt.task_priority AS priority 
-               FROM task_ticket tt 
-               INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
-               WHERE ct.designation_division = '${division}'
-           `
-       };
+    // Return successful response with tasks data
+    return NextResponse.json(
+      {
+        code: 'SUCCESS',
+        message: 'Tasks retrieved successfully',
+        tasks
+      },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Error retrieving tasks:', error);
+    
+    return createErrorResponse(
+      500, 
+      'TASKS_RETRIEVAL_ERROR', 
+      'Failed to retrieve tasks',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+  }
+}
 
-       // Execute database query
-       const tasks = await Query(tasksQuery);
+/**
+ * Creates a standardized error response
+ */
+function createErrorResponse(
+  status: number, 
+  code: string, 
+  message: string, 
+  errorDetail?: string
+): NextResponse {
+  const responseBody: Record<string, unknown> = { code, message };
+  
+  if (errorDetail) {
+    responseBody.error = errorDetail;
+  }
+  
+  return NextResponse.json(responseBody, { status });
+}
 
-       // Return successful response with tasks data
-       return NextResponse.json(
-           { 
-               code: 'SUCCESS',
-               message: 'Tasks retrieved successfully',
-               tasks: tasks
-           }, 
-           { status: 200 }
-       );
+/**
+ * Fetches tasks for a specific division from the database
+ */
+async function fetchTasksByDivision(divisionId: string) {
+  // Use parameterized query to prevent SQL injection
+  const tasksQuery = {
+    query: `
+      SELECT DISTINCT 
+        tt.task_uuid AS id, 
+        tt.task_title AS title, 
+        tt.task_description AS description, 
+        DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
+        CASE 
+          WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
+          ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
+        END AS dateCompleted,
+        tt.task_priority AS priority 
+      FROM task_ticket tt 
+      INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
+      WHERE ct.designation_division = ?
+    `,
+    values: [divisionId]
+  };
 
-   } catch (error) {
-       console.error('Error retrieving tasks:', error);
-       
-       // Return error response with appropriate details
-       return NextResponse.json(
-           { 
-               code: 'TASKS_RETRIEVAL_ERROR', 
-               message: 'Failed to retrieve tasks',
-               error: error instanceof Error ? error.message : 'Unknown error'
-           }, 
-           { status: 500 }
-       );
-   }
+  return await Query(tasksQuery);
 }
