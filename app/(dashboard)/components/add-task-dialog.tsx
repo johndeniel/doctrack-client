@@ -21,6 +21,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import type { Priority, Task } from "@/lib/types"
 import { formatDateToString } from "@/lib/calendar-utils"
+import { insertDocument } from "@/server/action/insert-docuemnt"
 
 // Form schema with validation
 const formSchema = z.object({
@@ -32,7 +33,7 @@ const formSchema = z.object({
   origin: z.enum(["Internal", "External"], {
     required_error: "Task origin is required",
   }),
-  priority: z.enum(["high", "medium", "low"], {
+  priority: z.enum(["High", "Medium", "Low"], {
     required_error: "Priority is required",
   }),
   dateReceived: z.date({
@@ -46,7 +47,7 @@ const formSchema = z.object({
   .refine((date) => !isBefore(date, startOfDay(new Date())), "Due date cannot be in the past"),
 })
 
-type FormValues = z.infer<typeof formSchema>
+export type FormValues = z.infer<typeof formSchema>
 
 interface AddTaskDialogProps {
   open: boolean
@@ -67,7 +68,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
       description: "",
       type: "Digital Document",
       origin: "Internal",
-      priority: "medium",
+      priority: "Medium",
       dateReceived: new Date(),
       timeReceived: format(new Date(), "HH:mm"),
       dueDate: new Date(),
@@ -83,7 +84,7 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
       description: "",
       type: "Digital Document",
       origin: "Internal",
-      priority: "medium",
+      priority: "Medium",
       dateReceived: new Date(),
       timeReceived: format(new Date(), "HH:mm"),
     })
@@ -92,20 +93,28 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
   /**
    * Handle form submission
    */
-  const onSubmit = (values: FormValues) => {
-    // Create new task object
-    const newTask: Omit<Task, "id"> = {
-      title: values.title,
-      description: values.description,
-      priority: values.priority as Priority,
-      dueDate:  formatDateToString(values.dueDate),
-      dateCompleted: undefined,
+  const onSubmit = async (values: FormValues) => {
+    try {
+      // Call the insertDocument function with form values
+      await insertDocument(values);
+      console.log(values);
+      // Create new task object
+      const newTask: Omit<Task, "id"> = {
+        title: values.title,
+        description: values.description,
+        priority: values.priority as Priority,
+        dueDate: formatDateToString(values.dueDate),
+        dateCompleted: undefined,
+      }
+  
+      // Add task and close dialog
+      onAddTask(newTask)
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      console.error("Failed to insert document:", error);
+      // You might want to add error handling UI here
     }
-
-    // Add task and close dialog
-    onAddTask(newTask)
-    onOpenChange(false)
-    resetForm()
   }
 
   /**
@@ -225,9 +234,9 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask }: AddTaskDialogPr
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="high">High Priority</SelectItem>
-                        <SelectItem value="medium">Medium Priority</SelectItem>
-                        <SelectItem value="low">Low Priority</SelectItem>
+                        <SelectItem value="High">High Priority</SelectItem>
+                        <SelectItem value="Medium">Medium Priority</SelectItem>
+                        <SelectItem value="Low">Low Priority</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-xs" />
