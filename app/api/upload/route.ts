@@ -18,31 +18,32 @@ interface TaskTicketRequestBody {
 interface TaskTicketResponse {
   code: string;
   message: string;
-  // Note: The task_uuid is auto-generated. If you need to return it,
-  // you may consider retrieving it or modifying the INSERT logic.
   task_uuid?: string;
+}
+
+interface UuidResult {
+  generated_uuid: string;
 }
 
 export async function POST(request: NextRequest) {
   try {
     // Authenticate request with token from cookies
-        const token = await getTokenFromCookie();
+    const token = await getTokenFromCookie();
         
     if (!token) {
-        return createErrorResponse(401, 'UNAUTHORIZED', 'No authentication token found');
+      return createErrorResponse(401, 'UNAUTHORIZED', 'No authentication token found');
     }
 
-      // Verify token and extract user information
-      const tokenPayload = await verifyToken(token);
+    // Verify token and extract user information
+    const tokenPayload = await verifyToken(token);
 
-      const task_creator_account_uuid = tokenPayload?.id;
-      const task_assigned_division = tokenPayload?.division;
+    const task_creator_account_uuid = tokenPayload?.id;
+    const task_assigned_division = tokenPayload?.division;
 
     const requestData = await request.json();
     const {
       task_title,
       task_description,
- 
       task_type,
       task_origin,
       task_priority,
@@ -53,16 +54,16 @@ export async function POST(request: NextRequest) {
 
     // Validate required fields
     if (
-        !task_title ||
-        !task_description ||
-        !task_creator_account_uuid ||
-        !task_type ||
-        !task_origin ||
-        !task_priority ||
-        !task_date_created ||
-        !task_time_created ||
-        !task_due_date ||
-        !task_assigned_division
+      !task_title ||
+      !task_description ||
+      !task_creator_account_uuid ||
+      !task_type ||
+      !task_origin ||
+      !task_priority ||
+      !task_date_created ||
+      !task_time_created ||
+      !task_due_date ||
+      !task_assigned_division
     ) {
       return NextResponse.json(
         {
@@ -87,9 +88,17 @@ export async function POST(request: NextRequest) {
     // Begin transaction
     await Query({ query: 'BEGIN' });
 
+    // First generate a UUID for the task
+    const generateUuidResult = await Query({ 
+      query: 'SELECT UUID() as generated_uuid' 
+    }) as UuidResult[];
+    
+    const taskUuid = generateUuidResult[0].generated_uuid;
+
     const insertTaskQuery = {
       query: `
         INSERT INTO task_ticket (
+          task_uuid,
           task_title,
           task_description,
           task_creator_account_uuid,
@@ -100,9 +109,10 @@ export async function POST(request: NextRequest) {
           task_time_created,
           task_due_date,
           task_assigned_division
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       values: [
+        taskUuid,
         task_title,
         task_description,
         task_creator_account_uuid,
@@ -116,17 +126,39 @@ export async function POST(request: NextRequest) {
       ]
     };
 
-    // Execute the insert query
+    // Execute the insert task query
     await Query(insertTaskQuery);
+
+    // Insert into task_collaboration_timeline
+    const insertCollaborationTimelineQuery = {
+      query: `
+        INSERT INTO task_collaboration_timeline (
+          task_uuid,
+          author_account_uuid,
+          collaboration_action_type,
+          designation_division,
+          remarks
+        ) VALUES (?, ?, 'Upload', ?, ?)
+      `,
+      values: [
+        taskUuid,
+        task_creator_account_uuid,
+        task_assigned_division,
+        `${task_assigned_division} upload the document ${task_title}`
+      ]
+    };
+
+    // Execute the collaboration timeline insert query
+    await Query(insertCollaborationTimelineQuery);
 
     // Commit the transaction after successful insertion
     await Query({ query: 'COMMIT' });
 
-    // Return a success response. The primary key is generated automatically.
+    // Return a success response with the task UUID
     const response: TaskTicketResponse = {
       code: 'TASK_TICKET_CREATED',
-      message: 'Task ticket created successfully'
-      // Optionally, include a generated task_uuid if available
+      message: 'Task ticket created successfully',
+      task_uuid: taskUuid
     };
 
     return NextResponse.json(response, { status: 201 });
@@ -149,16 +181,16 @@ export async function POST(request: NextRequest) {
  * Creates a standardized error response
  */
 function createErrorResponse(
-    status: number, 
-    code: string, 
-    message: string, 
-    errorDetail?: string
-  ): NextResponse {
-    const responseBody: Record<string, unknown> = { code, message };
-    
-    if (errorDetail) {
-      responseBody.error = errorDetail;
-    }
-    
-    return NextResponse.json(responseBody, { status });
+  status: number, 
+  code: string, 
+  message: string, 
+  errorDetail?: string
+): NextResponse {
+  const responseBody: Record<string, unknown> = { code, message };
+  
+  if (errorDetail) {
+    responseBody.error = errorDetail;
   }
+  
+  return NextResponse.json(responseBody, { status });
+}

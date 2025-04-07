@@ -199,7 +199,7 @@ CREATE TABLE IF NOT EXISTS task_collaboration_timeline (
   author_account_uuid VARCHAR(36) NOT NULL,
   
   -- Collaboration Action: Type of workflow action performed
-  collaboration_action_type ENUM('Forwarded', 'Verification', 'Review') NOT NULL,
+  collaboration_action_type ENUM('Forwarded', 'Verification', 'Review', 'Upload') NOT NULL,
 
   -- Division Designation: The organizational unit to which the task is forwarded
   designation_division ENUM('ARU-MAU', 'OD', 'PMTSSD', 'PPDD', 'URWED') NOT NULL,
