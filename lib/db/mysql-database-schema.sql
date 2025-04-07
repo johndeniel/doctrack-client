@@ -96,40 +96,6 @@ CREATE TABLE IF NOT EXISTS users_profile_image (
 );
 
 
--- User Authentication Sessions Table
-CREATE TABLE IF NOT EXISTS user_authentication_sessions (
-  -- Session Unique Identifier
-  session_uuid VARCHAR(36) PRIMARY KEY DEFAULT (UUID()),
-  
-  -- Foreign Key Linking to User Account
-  authenticated_user_id VARCHAR(36) NOT NULL,
-  
-  -- Secure Authentication Token
-  authentication_token VARCHAR(500) NOT NULL,
-  
-  -- Browser Information
-  client_browser_name VARCHAR(100),
-  client_browser_version VARCHAR(50),
-  
-  -- Operating System Information
-  client_os_name VARCHAR(100),
-  client_os_version VARCHAR(50),
-  
-  -- Session Timing Information
-  session_initiated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  session_expiration_timestamp TIMESTAMP NOT NULL,
-  
-  -- Token Security Validation
-  CONSTRAINT secure_token_length CHECK (LENGTH(authentication_token) >= 32 AND LENGTH(authentication_token) <= 500),
-  
-  -- Foreign Key Constraint linking to users_account table
-  FOREIGN KEY (authenticated_user_id) REFERENCES users_account(account_uuid) ON DELETE CASCADE,
-  
-  -- Index for efficient session lookup
-  INDEX idx_auth_token (authentication_token),
-  INDEX idx_user_id (authenticated_user_id)
-);
-
 -- Task Tracking Ticket Table
 CREATE TABLE IF NOT EXISTS task_ticket (
   -- Primary Key: UUID generated automatically for each new task
@@ -219,32 +185,3 @@ CREATE TABLE IF NOT EXISTS task_collaboration_timeline (
   INDEX idx_timeline_task (task_uuid),
   INDEX idx_timeline_author (author_account_uuid)
 );
-
-
-SELECT DISTINCT 
-    tt.task_uuid AS id, 
-    tt.task_title AS title, 
-    tt.task_description AS description, 
-    tt.task_due_date AS dueDate, 
-    CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
-    CASE WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' ELSE tt.task_completed_timestamp END AS dateCompleted, 
-    LOWER(tt.task_priority) AS priority 
-FROM task_ticket tt 
-INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
-WHERE ct.designation_division = 'ARU-MAU';
-
-
-SELECT DISTINCT 
-    tt.task_uuid AS id, 
-    tt.task_title AS title, 
-    tt.task_description AS description, 
-    DATE_FORMAT(tt.task_due_date, '%d-%m-%Y') AS dueDate, 
-    CASE WHEN tt.task_is_completed = 1 THEN 'true' ELSE 'false' END AS completed, 
-    CASE 
-        WHEN tt.task_completed_timestamp IS NULL THEN 'undefined' 
-        ELSE DATE_FORMAT(tt.task_completed_timestamp, '%d-%m-%Y') 
-    END AS dateCompleted, 
-    LOWER(tt.task_priority) AS priority 
-FROM task_ticket tt 
-INNER JOIN task_collaboration_timeline ct ON tt.task_uuid = ct.task_uuid 
-WHERE ct.designation_division = 'ARU-MAU';

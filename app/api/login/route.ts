@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { Query } from '@/lib/db/mysql-connection-helper';
 import { generateToken, setTokenCookie } from '@/lib/jwt';
 import * as argon2 from 'argon2';
-import { UAParser } from 'ua-parser-js';
 
 // TypeScript interfaces for request/response data
 interface LoginRequestBody {
@@ -17,12 +16,6 @@ interface UserRecord {
   account_division_designation: string; // Added division designation
 }
 
-interface DeviceInfo {
-  browserName: string | undefined;
-  browserVersion: string | undefined;
-  osName: string | undefined;
-  osVersion: string | undefined;
-}
 
 interface AuthenticationResponse {
   code: string;
@@ -32,7 +25,6 @@ interface AuthenticationResponse {
     username: string;
     division_designation: string; // Added division designation
   };
-  device?: DeviceInfo;
 }
 
 export async function POST(request: NextRequest) {
@@ -97,41 +89,7 @@ export async function POST(request: NextRequest) {
       division: user.account_division_designation
     });
 
-    // Parse the user-agent string using ua-parser-js
-    const userAgentString = request.headers.get('user-agent') || 'unknown';
-    const parser = new UAParser(userAgentString);
-    const deviceInfo = parser.getResult();
-
-    // Extract only the browser and OS information
-    const deviceData: DeviceInfo = {
-      browserName: deviceInfo.browser.name,
-      browserVersion: deviceInfo.browser.version,
-      osName: deviceInfo.os.name,
-      osVersion: deviceInfo.os.version
-    };
-
-    // Insert session details into the user_authentication_sessions table
-    const createSessionQuery = {
-      query: `INSERT INTO user_authentication_sessions 
-              (authenticated_user_id, 
-               authentication_token, 
-               client_browser_name,
-               client_browser_version,
-               client_os_name,
-               client_os_version,
-               session_expiration_timestamp) 
-              VALUES (?, ?, ?, ?, ?, ?, DATE_ADD(NOW(), INTERVAL 1 DAY))`,
-      values: [
-        user.account_uuid,
-        token,
-        deviceData.browserName || 'unknown',
-        deviceData.browserVersion || 'unknown',
-        deviceData.osName || 'unknown',
-        deviceData.osVersion || 'unknown'
-      ]
-    };
-
-    await Query(createSessionQuery);
+   
 
     // Update the last authentication timestamp in the users_account table
     const updateAuthTimestampQuery = {
@@ -157,7 +115,6 @@ export async function POST(request: NextRequest) {
         username: user.account_username,
         division_designation: user.account_division_designation
       },
-      device: deviceData
     };
 
     return NextResponse.json(response, { status: 200 });
