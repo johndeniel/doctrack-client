@@ -14,7 +14,7 @@ export async function POST() {
         secure: false, 
         sameSite: 'lax' as const, 
         path: '/',
-        expires: new Date(0), // This makes the cookie expire immediately
+        expires: new Date(0),
     })
 
     return response
