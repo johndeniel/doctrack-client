@@ -250,7 +250,7 @@ export default function TasksView() {
   // Navigation handler with useTransition for improved UX
   const handleTaskClick = useCallback((taskId: string) => {
     startTransition(() => {
-      router.push(`/task-info?id=${taskId}`)
+      router.push(`/document/${taskId}`)
     })
   }, [router])
 

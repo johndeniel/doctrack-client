@@ -57,18 +57,24 @@ export function Timeline() {
               <TimelineItem
                 key={item.id}
                 step={item.id}
-                className="group-data-[orientation=vertical]/timeline:ms-10 group-data-[orientation=vertical]/timeline:not-last:pb-6 hover:bg-muted/5 transition-colors rounded-lg px-3 py-2.5"
+                className="group-data-[orientation=vertical]/timeline:ms-12 group-data-[orientation=vertical]/timeline:not-last:pb-7 hover:bg-muted/5 transition-colors rounded-lg px-3 py-2.5"
               >
                 <TimelineHeader>
-                  <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-[2.625rem] group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6" />
+                  <TimelineSeparator 
+                    className="group-data-[orientation=vertical]/timeline:-left-[3.25rem] group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6"
+                    style={{ width: "3px" }}
+                  />
                   <TimelineTitle className="flex items-center gap-2 text-base font-medium">
                     {item.title}
                     <span className="text-muted-foreground text-sm font-normal">{item.action}</span>
                   </TimelineTitle>
-                  <TimelineIndicator className="group-data-completed/timeline-item:bg-transparent group-data-[orientation=vertical]/timeline:-left-[2.625rem] border-0 p-0 flex items-center justify-center">
-                    <Avatar className="h-8 w-8 border-2 border-background">
+                  <TimelineIndicator 
+                    className="group-data-completed/timeline-item:bg-transparent group-data-[orientation=vertical]/timeline:-left-[3.25rem] border-0 p-0 flex items-center justify-center"
+                    style={{ width: "48px", height: "48px" }}
+                  >
+                    <Avatar className="h-12 w-12 border-3 border-background shadow-md">
                       <AvatarImage src={item.image} alt={item.title} />
-                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                      <AvatarFallback className="bg-primary/10 text-primary text-sm font-medium">
                         {item.title
                           .split(" ")
                           .map((n) => n[0])
@@ -77,7 +83,7 @@ export function Timeline() {
                     </Avatar>
                   </TimelineIndicator>
                 </TimelineHeader>
-                <TimelineContent className="text-foreground mt-2.5 rounded-lg border px-4 py-3 shadow-sm">
+                <TimelineContent className="text-foreground mt-3 rounded-lg border px-5 py-4 shadow-sm">
                   <p className="text-sm leading-relaxed">{item.description}</p>
                   <div className="mt-2">
                     <TimelineDate className="mb-0 text-xs font-medium text-muted-foreground">{item.date}</TimelineDate>

@@ -1,9 +1,12 @@
+// this is app/document/[id]page.tsx
+
 "use client"
 
 import { Timeline } from "@/app/document/components/timeline"
 import { DataEntryForm } from "@/app/document/components/data-entry-form"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { useParams } from "next/navigation"
 import {
   Clock,
   Calendar,
@@ -41,6 +44,11 @@ export default function DocumentActivityPage() {
     // Handle delete action
     console.log("Delete action triggered")
   }
+
+  const params = useParams()
+  const documentId = params.id // This will contain the value from the URL
+
+  console.log("Current document ID:", documentId)
 
   return (
     <div className="dark:bg-black dark:text-white">
