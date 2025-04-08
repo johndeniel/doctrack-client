@@ -38,7 +38,7 @@ export function ClientLayout({
   return (
     <div className="flex flex-col h-screen w-screen overflow-hidden">
       <main className="flex-grow overflow-auto bg-white dark:bg-black">
-        <div className="h-full w-full max-w-7xl mx-auto px-4 md:px-8">
+        <div className="h-full w-full mx-auto px-4 md:px-8">
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
@@ -51,7 +51,7 @@ export function ClientLayout({
       </main>
 
       {/* Navigation dock - only show if not on login page */}
-      {pathname !== '/login' && (
+      {pathname !== '/login' && pathname !== '/document' && (
         <FloatingDock
           items={links.map((link) => ({
             ...link,
