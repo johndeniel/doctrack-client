@@ -1,6 +1,6 @@
 "use client"
 
-import { TimelineWithScroll } from "@/app/document/components/timeline-with-scroll"
+import { Timeline } from "@/app/document/components/timeline"
 import { DataEntryForm } from "@/app/document/components/data-entry-form"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -159,7 +159,7 @@ export default function DocumentActivityPage() {
                 <div className="text-xs text-muted-foreground dark:text-gray-400 px-2.5 py-1 rounded-full ml-3">4 events</div>
               </div>
               <div className="rounded-lg border dark:border-gray-800 shadow-sm overflow-hidden">
-                <TimelineWithScroll />
+                <Timeline />
               </div>
             </div>
 

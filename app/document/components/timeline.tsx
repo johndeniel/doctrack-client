@@ -1,4 +1,5 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import {
   Timeline as TimelineComponent,
   TimelineContent,
@@ -48,41 +49,45 @@ const items = [
 
 export function Timeline() {
   return (
-    <div className="max-w-3xl">
-      <TimelineComponent>
-        {items.map((item) => (
-          <TimelineItem
-            key={item.id}
-            step={item.id}
-            className="group-data-[orientation=vertical]/timeline:ms-9 group-data-[orientation=vertical]/timeline:not-last:pb-6 hover:bg-muted/5 transition-colors rounded-lg px-3 py-2.5"
-          >
-            <TimelineHeader>
-              <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-7 group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6" />
-              <TimelineTitle className="flex items-center gap-2 text-base font-medium">
-                {item.title}
-                <span className="text-muted-foreground text-sm font-normal">{item.action}</span>
-              </TimelineTitle>
-              <TimelineIndicator className="group-data-completed/timeline-item:bg-primary group-data-completed/timeline-item:text-primary-foreground group-data-[orientation=vertical]/timeline:-left-7">
-                <Avatar className="h-7 w-7">
-                  <AvatarImage src={item.image} alt={item.title} />
-                  <AvatarFallback className="bg-primary/10 text-primary text-xs">
-                    {item.title
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
-                  </AvatarFallback>
-                </Avatar>
-              </TimelineIndicator>
-            </TimelineHeader>
-            <TimelineContent className="text-foreground mt-2.5 rounded-lg border px-4 py-3 shadow-sm">
-              <p className="text-sm leading-relaxed">{item.description}</p>
-              <div className="mt-2">
-                <TimelineDate className="mb-0 text-xs font-medium text-muted-foreground">{item.date}</TimelineDate>
-              </div>
-            </TimelineContent>
-          </TimelineItem>
-        ))}
-      </TimelineComponent>
-    </div>
+    <ScrollArea className="h-[520px]">
+      <div className="p-6">
+        <div className="max-w-3xl">
+          <TimelineComponent>
+            {items.map((item) => (
+              <TimelineItem
+                key={item.id}
+                step={item.id}
+                className="group-data-[orientation=vertical]/timeline:ms-10 group-data-[orientation=vertical]/timeline:not-last:pb-6 hover:bg-muted/5 transition-colors rounded-lg px-3 py-2.5"
+              >
+                <TimelineHeader>
+                  <TimelineSeparator className="group-data-[orientation=vertical]/timeline:-left-[2.625rem] group-data-[orientation=vertical]/timeline:h-[calc(100%-1.5rem-0.25rem)] group-data-[orientation=vertical]/timeline:translate-y-6" />
+                  <TimelineTitle className="flex items-center gap-2 text-base font-medium">
+                    {item.title}
+                    <span className="text-muted-foreground text-sm font-normal">{item.action}</span>
+                  </TimelineTitle>
+                  <TimelineIndicator className="group-data-completed/timeline-item:bg-transparent group-data-[orientation=vertical]/timeline:-left-[2.625rem] border-0 p-0 flex items-center justify-center">
+                    <Avatar className="h-8 w-8 border-2 border-background">
+                      <AvatarImage src={item.image} alt={item.title} />
+                      <AvatarFallback className="bg-primary/10 text-primary text-xs">
+                        {item.title
+                          .split(" ")
+                          .map((n) => n[0])
+                          .join("")}
+                      </AvatarFallback>
+                    </Avatar>
+                  </TimelineIndicator>
+                </TimelineHeader>
+                <TimelineContent className="text-foreground mt-2.5 rounded-lg border px-4 py-3 shadow-sm">
+                  <p className="text-sm leading-relaxed">{item.description}</p>
+                  <div className="mt-2">
+                    <TimelineDate className="mb-0 text-xs font-medium text-muted-foreground">{item.date}</TimelineDate>
+                  </div>
+                </TimelineContent>
+              </TimelineItem>
+            ))}
+          </TimelineComponent>
+        </div>
+      </div>
+    </ScrollArea> 
   )
 }
