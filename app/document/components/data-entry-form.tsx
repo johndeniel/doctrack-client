@@ -6,7 +6,13 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select"
 import { Send, CheckCircle2 } from "lucide-react"
 
 export function DataEntryForm() {
@@ -22,7 +28,7 @@ export function DataEntryForm() {
 
     // Simulate API call
     try {
-      // In a real application, you would send the data to your API here
+      // In a real application, send your data to an API here
       await new Promise((resolve) => setTimeout(resolve, 1000))
       setIsSuccess(true)
       setTimeout(() => {
@@ -38,7 +44,8 @@ export function DataEntryForm() {
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="rounded-lg border bg-background p-4">
+      {/* Updated container with explicit border color in light and dark mode */}
+      <div className="rounded-lg border border-gray-200 dark:border-black bg-background p-4">
         <Textarea
           placeholder="Enter your remarks or comments here..."
           className="min-h-[100px] resize-none border-0 p-0 focus-visible:ring-0 text-sm leading-relaxed"
@@ -54,7 +61,11 @@ export function DataEntryForm() {
               </Label>
               <div className="relative">
                 <Select value={action} onValueChange={setAction}>
-                  <SelectTrigger id="action" className="w-full border-0 bg-muted/50 text-xs h-9 px-3">
+                  {/* Added focus:ring classes so that the focus outline remains black in dark mode */}
+                  <SelectTrigger
+                    id="action"
+                    className="w-full border-0 bg-muted/50 text-xs h-9 px-3 focus:ring-2 focus:ring-black dark:focus:ring-black"
+                  >
                     <SelectValue placeholder="Action" />
                   </SelectTrigger>
                   <SelectContent>
@@ -72,7 +83,11 @@ export function DataEntryForm() {
               </Label>
               <div className="relative">
                 <Select value={division} onValueChange={setDivision}>
-                  <SelectTrigger id="division" className="w-full border-0 bg-muted/50 text-xs h-9 px-3">
+                  {/* The same focus styling is applied here */}
+                  <SelectTrigger
+                    id="division"
+                    className="w-full border-0 bg-muted/50 text-xs h-9 px-3 focus:ring-2 focus:ring-black dark:focus:ring-black"
+                  >
                     <SelectValue placeholder="Division" />
                   </SelectTrigger>
                   <SelectContent>
@@ -99,7 +114,14 @@ export function DataEntryForm() {
                   fill="none"
                   viewBox="0 0 24 24"
                 >
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
                   <path
                     className="opacity-75"
                     fill="currentColor"
