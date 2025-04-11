@@ -51,7 +51,7 @@ export function ClientLayout({
       </main>
 
       {/* Navigation dock - only show if not on login page */}
-      {pathname !== '/login' && pathname !== '/document' && (
+      {pathname !== '/login' && !pathname.startsWith('/document') && (
         <FloatingDock
           items={links.map((link) => ({
             ...link,
