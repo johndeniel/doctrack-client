@@ -233,8 +233,7 @@ export default function CalendarBoard(): React.ReactElement {
       
       const newTaskItem: Task = {
         id: newTaskId,
-        ...newTask,
-        dueDate: formatDateToString(selectedDate),
+        ...newTask, // This will include all the fields from the form
       };
       
       // Update with functional state update pattern
@@ -531,7 +530,7 @@ export default function CalendarBoard(): React.ReactElement {
             open={isAddTaskOpen}
             onOpenChange={setIsAddTaskOpen}
             onAddTask={handleAddTasks}
-            selectedDate={selectedDate || new Date()}
+            selectedDate={selectedDate}
           />
         </div>
       </TooltipProvider>

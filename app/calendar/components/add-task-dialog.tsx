@@ -1,5 +1,5 @@
 "use client"
-import { format } from "date-fns"
+import { format, isBefore, startOfDay } from "date-fns"
 import { CalendarIcon } from "lucide-react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
@@ -19,8 +19,10 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formatDateToString } from "@/lib/task-utils"
 import type { Priority, Task } from "@/lib/types"
+import { formatDateToString } from "@/lib/calendar-utils"
+import { insertDocument } from "@/server/action/insert-docuemnt"
+import { useEffect } from "react"
 
 // Form schema with validation
 const formSchema = z.object({
@@ -32,22 +34,27 @@ const formSchema = z.object({
   origin: z.enum(["Internal", "External"], {
     required_error: "Task origin is required",
   }),
-  priority: z.enum(["high", "medium", "low"], {
+  priority: z.enum(["High", "Medium", "Low"], {
     required_error: "Priority is required",
   }),
   dateReceived: z.date({
     required_error: "Date received is required",
   }),
   timeReceived: z.string().min(1, "Time received is required"),
+  dueDate: z
+  .date({
+    required_error: "Due date is required",
+  })
+  .refine((date) => !isBefore(date, startOfDay(new Date())), "Due date cannot be in the past"),
 })
 
-type FormValues = z.infer<typeof formSchema>
+export type FormValues = z.infer<typeof formSchema>
 
 interface AddTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onAddTask: (task: Omit<Task, "id">) => void
-  selectedDate: Date
+  selectedDate: Date | null
 }
 
 /**
@@ -63,12 +70,18 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
       description: "",
       type: "Digital Document",
       origin: "Internal",
-      priority: "medium",
+      priority: "Medium",
       dateReceived: new Date(),
       timeReceived: format(new Date(), "HH:mm"),
+      dueDate: selectedDate || new Date(),
     },
   })
-
+  // Update dueDate when selectedDate changes or dialog opens
+  useEffect(() => {
+    if (open && selectedDate) {
+      form.setValue("dueDate", selectedDate);
+    }
+  }, [open, selectedDate, form]);
   /**
    * Reset form fields to default values
    */
@@ -78,29 +91,38 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
       description: "",
       type: "Digital Document",
       origin: "Internal",
-      priority: "medium",
+      priority: "Medium",
       dateReceived: new Date(),
       timeReceived: format(new Date(), "HH:mm"),
+      dueDate: selectedDate || new Date(), // Include the selectedDate here
     })
   }
 
   /**
    * Handle form submission
    */
-  const onSubmit = (values: FormValues) => {
-    // Create new task object
-    const newTask: Omit<Task, "id"> = {
-      title: values.title,
-      description: values.description,
-      priority: values.priority as Priority,
-      dueDate: formatDateToString(selectedDate),
-      dateCompleted: undefined,
+  const onSubmit = async (values: FormValues) => {
+    try {
+      // Call the insertDocument function with form values
+      await insertDocument(values);
+      console.log(values);
+      // Create new task object
+      const newTask: Omit<Task, "id"> = {
+        title: values.title,
+        description: values.description,
+        priority: values.priority as Priority,
+        dueDate: formatDateToString(values.dueDate),
+        dateCompleted: undefined,
+      }
+  
+      // Add task and close dialog
+      onAddTask(newTask)
+      onOpenChange(false)
+      resetForm()
+    } catch (error) {
+      console.error("Failed to insert document:", error);
+      // You might want to add error handling UI here
     }
-
-    // Add task and close dialog
-    onAddTask(newTask)
-    onOpenChange(false)
-    resetForm()
   }
 
   /**
@@ -220,9 +242,9 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        <SelectItem value="high">High Priority</SelectItem>
-                        <SelectItem value="medium">Medium Priority</SelectItem>
-                        <SelectItem value="low">Low Priority</SelectItem>
+                        <SelectItem value="High">High Priority</SelectItem>
+                        <SelectItem value="Medium">Medium Priority</SelectItem>
+                        <SelectItem value="Low">Low Priority</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage className="text-xs" />
@@ -286,6 +308,8 @@ export function AddTaskDialog({ open, onOpenChange, onAddTask, selectedDate }: A
                     </FormItem>
                   )}
                 />
+
+                 
               </div>
             </div>
 
