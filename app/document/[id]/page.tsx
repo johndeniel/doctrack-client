@@ -250,7 +250,7 @@ export default function DocumentActivityPage() {
                 </div>
               </div>
               <div className="rounded-lg border dark:border-gray-800 shadow-sm overflow-hidden">
-                <Timeline />
+                <Timeline documentId={documentId} />
               </div>
             </div>
 
