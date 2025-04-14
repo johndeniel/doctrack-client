@@ -196,12 +196,11 @@ export default function CalendarBoard(): React.ReactElement {
   }, []);
 
   // Handle clicking on a task to view its details with useTransition for better UX
-  const handleTaskClick = useCallback((taskId: string): void => {
-    setIsViewTasksOpen(false);
-    startTransition(() => {
-      router.push(`/task-info?id=${taskId}`);
-    });
-  }, [router]);
+    const handleTaskClick = useCallback((taskId: string) => {
+      startTransition(() => {
+        router.push(`/document/${taskId}`)
+      })
+    }, [router])
 
   // Get tasks scheduled for a specific day using the optimized lookup table
   const getTasksForDay = useCallback((day: Date): Task[] => {
