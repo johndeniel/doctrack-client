@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server';
+import { getTokenFromCookie, verifyToken } from '@/lib/jwt';
 import { Query } from '@/lib/db/mysql-connection-helper';
 
 interface TaskData {
@@ -13,13 +14,27 @@ interface TaskData {
   task_due_date: string;
   dateCompleted: string;
   account_legal_name: string;
+  account_uuid: string;
   profile_image_data: string;
+  currentUserId?: string;
 }
 
 export async function GET(request: Request) {
   try {
     const url = new URL(request.url);
     const taskUuid = url.searchParams.get('taskUuid');
+
+    // Retrieve token from cookie
+    const token = await getTokenFromCookie();
+    if (!token) {
+      return NextResponse.json(
+        { code: 'UNAUTHORIZED', message: 'Missing authentication token' },
+        { status: 401 }
+      );
+    }
+
+    // Verify token using the valid token string
+    const tokenPayload = await verifyToken(token);
 
     if (!taskUuid) {
       return NextResponse.json(
@@ -36,6 +51,9 @@ export async function GET(request: Request) {
         { status: 404 }
       );
     }
+
+    // Set tokenPayload?.id as currentUserId in the retrieved task data
+    taskData[0].currentUserId = tokenPayload?.id;
 
     return NextResponse.json({
       code: 'SUCCESS',
@@ -69,6 +87,7 @@ async function getTaskDetails(taskUuid: string): Promise<TaskData[]> {
           ELSE DATE_FORMAT(t.task_completed_timestamp, '%d-%m-%Y')
         END AS dateCompleted,
         u.account_legal_name,
+        u.account_uuid,
         pi.profile_image_data
       FROM
         task_ticket t

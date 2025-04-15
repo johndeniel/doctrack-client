@@ -1,4 +1,5 @@
 export interface BannerData {
+    currentUserId: string;
     task_uuid: string;
     task_title: string;
     task_description: string;
@@ -10,6 +11,7 @@ export interface BannerData {
     task_due_date: string;
     dateCompleted: string;
     account_legal_name: string;
+    account_uuid: string;
     profile_image_data: string;
   } 
   
