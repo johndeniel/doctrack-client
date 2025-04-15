@@ -178,7 +178,7 @@ CREATE TABLE IF NOT EXISTS task_collaboration_timeline (
   collaboration_updated_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   
   -- Foreign Key Relationships: Ensures data integrity with related tables
-  FOREIGN KEY (task_uuid) REFERENCES task_ticket(task_uuid) ON DELETE RESTRICT,
+  FOREIGN KEY (task_uuid) REFERENCES task_ticket(task_uuid) ON DELETE CASCADE,
   FOREIGN KEY (author_account_uuid) REFERENCES users_account(account_uuid) ON DELETE RESTRICT,
   
   -- Indexing for performance
