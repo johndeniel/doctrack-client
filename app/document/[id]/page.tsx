@@ -18,6 +18,8 @@ import {
   Trash2,
 } from "lucide-react";
 import { fetchBanner, BannerData } from "@/server/queries/fetch-banner";
+import { CompletionStatus } from "@/lib/types";
+import { isPast, isToday, isBefore, isSameDay, parse, format } from "date-fns";
 
 // Define a type for the unified document data interface.
 interface UnifiedDocumentData {
@@ -32,6 +34,7 @@ interface UnifiedDocumentData {
   dueDate: string;
   uploadedBy: string;
   uploadedByAvatar: string;
+  dateCompleted: string;
 }
 
 export default function DocumentActivityPage() {
@@ -50,6 +53,7 @@ export default function DocumentActivityPage() {
       try {
         if (documentId) {
           const data = await fetchBanner(documentId);
+          console.log("Banner data:", data);
           setBannerData(data);
         }
       } catch (err) {
@@ -62,6 +66,56 @@ export default function DocumentActivityPage() {
     getBannerData();
   }, [documentId]);
 
+  // Improved date parsing function that handles multiple formats
+  const parseDate = (dateString: string): Date => {
+    if (!dateString || dateString === "undefined") {
+      return new Date();
+    }
+    
+    // Try parsing with different formats
+    try {
+      // Try dd-MM-yyyy format first
+      if (/^\d{2}-\d{2}-\d{4}$/.test(dateString)) {
+        return parse(dateString, "dd-MM-yyyy", new Date());
+      }
+      
+      // Try Month dd, yyyy format (e.g., "April 15, 2025")
+      if (/^[A-Za-z]+ \d{1,2}, \d{4}$/.test(dateString)) {
+        return parse(dateString, "MMMM d, yyyy", new Date());
+      }
+      
+      // Fallback to Date object
+      return new Date(dateString);
+    } catch (err) {
+      console.error("Error parsing date:", dateString, err);
+      return new Date(); // Return current date as fallback
+    }
+  };
+  
+  const getCompletionStatus = (task: UnifiedDocumentData): CompletionStatus => {   
+    // Check if the task is completed by checking if dateCompleted exists and isn't the string "undefined"
+    const isCompleted = task.dateCompleted && task.dateCompleted !== "undefined";
+  
+    // Parse the due date
+    const dueDate = parseDate(task.dueDate);
+    
+    
+    // If the task is not completed, check if it's overdue
+    if (!isCompleted) {
+      const isOverdue = isPast(dueDate) && !isToday(dueDate);
+      return isOverdue ? "overdue" : "active";
+    }
+  
+    // If the task is completed, compare the completion date with the due date
+    const completedDate = parseDate(task.dateCompleted);
+
+    
+    const completedOnTime = isBefore(completedDate, dueDate) || isSameDay(completedDate, dueDate);
+
+    
+    return completedOnTime ? "completed on time" : "completed late";
+  };
+
   // Map BannerData to our unified document data shape if bannerData exists.
   const mappedBannerData: UnifiedDocumentData | null = bannerData
     ? {
@@ -70,34 +124,48 @@ export default function DocumentActivityPage() {
         type: bannerData.task_type,
         origin: bannerData.task_origin,
         priority: bannerData.task_priority,
-        // Adjust status mapping as needed. If status is part of the BannerData in the future, update here.
-        status: "In Review",
+        status: "", // Temporary placeholder
         dateReceived: bannerData.formatted_date,
         timeReceived: bannerData.formatted_time,
         dueDate: bannerData.task_due_date,
         uploadedBy: bannerData.account_legal_name,
         uploadedByAvatar: bannerData.profile_image_data,
+        dateCompleted: bannerData.dateCompleted || "undefined",
       }
     : null;
 
+  // Get today's date and a past date for the sample data
+  const today = format(new Date(), "MMMM d, yyyy");
+  const pastDate = format(new Date(2025, 3, 5), "MMMM d, yyyy"); // April 5, 2025
+
   // Use mapped banner data if available; otherwise, fallback to static document metadata.
-  const documentData: UnifiedDocumentData = mappedBannerData || {
+  // Create a sample completed document to test other status values
+  const sampleDocumentData = {
     title: "Q1 Financial Report 2025",
     description: "Quarterly financial analysis and performance metrics for stakeholders",
     type: "Financial Report",
     origin: "Finance Department",
     priority: "High",
     status: "In Review",
-    dateReceived: "April 5, 2025",
+    dateReceived: pastDate,
     timeReceived: "09:45 AM",
-    dueDate: "April 15, 2025",
+    dueDate: today, // Set to today to test different statuses
     uploadedBy: "Sarah Johnson",
     uploadedByAvatar: "/avatar-40-01.jpg",
+    dateCompleted: "undefined", // Change to a date string to test completed status
   };
+
+  // Use mapped data if available or sample data otherwise
+  const documentData: UnifiedDocumentData = mappedBannerData || sampleDocumentData;
+  
+  // Update status based on dates
+  documentData.status = getCompletionStatus(documentData);
 
   const handleComplete = () => {
     // Handle complete action
     console.log("Complete action triggered");
+    // Here you would typically update the document status to completed
+    // and set the dateCompleted to today's date
   };
 
   const handleDelete = () => {

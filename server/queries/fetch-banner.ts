@@ -11,7 +11,7 @@ export interface BannerData {
     dateCompleted: string;
     account_legal_name: string;
     profile_image_data: string;
-  }
+  } 
   
   interface BannerResponse {
     code: string;
